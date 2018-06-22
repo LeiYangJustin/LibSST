@@ -20,20 +20,22 @@ SwitchType CFileIO::read_config_file(std::string fname)
 	{
 		std::cout << line << std::endl;
 		if (strcmp(line.c_str(), "GLOBAL") == 0) {
+			in_file.close();
 			return SwitchType::sstGlobal; // global
 		}
 		else if (strcmp(line.c_str(), "LOCAL") == 0) {
+			in_file.close();
 			return SwitchType::sstLocal; // local 
 		}
 		else if (strcmp(line.c_str(), "PENDING") == 0) {
+			in_file.close();
 			return  SwitchType::sstPending; // pending
 		}
 		else {
+			in_file.close();
 			return SwitchType::sstExit; // exit
 		}
 	}
-	in_file.close();
-	return true;
 }
 
 bool CFileIO::read_local_def_cs_id_from_config_file(std::string fname, std::vector<int> &cs_ids)

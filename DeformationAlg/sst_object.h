@@ -133,7 +133,7 @@ private:
 		std::vector<COpenMeshT::Point> &cs_pts);
 	void decoding_vector_field(DenseMatrixXd & U,
 		const DenseMatrixXd & V, const std::vector<int> ids);
-
+	void decoding_mesh();
 	void cross_section_transformed_due_to_skeleton_change();
 
 	void set_parameters();

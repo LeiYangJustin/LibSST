@@ -63,6 +63,7 @@ bool CSstObject::LocalDeformSolve()
 		this->def_trimesh_ = this->trimesh_;
 		is_deformed_ = true;
 		deformer_->LocalDeformationSolve(this->def_cross_sections_, &this->trimesh_, &this->def_trimesh_);
+		decoding_mesh(); // have the deformed mesh in the original space
 		return true;
 	}
 	else
@@ -70,7 +71,6 @@ bool CSstObject::LocalDeformSolve()
 		std::cerr << "Cannot peform deformation as no information is supplied" << std::endl;
 		return false;
 	}
-	return false;
 }
 
 
@@ -124,16 +124,11 @@ void CSstObject::encoding_mesh()
 		Vector3d s(skeletal_pts[id_min][0], skeletal_pts[id_min][1], skeletal_pts[id_min][2]);
 		ptmp = rmf_list[id_min] * (v - s);
 		ptmp(0) = accu_arc_length[id_min];
+		// or ?
+		// ptmp(0) += accu_arc_length[id_min];
 		trimesh_.data(*viter).set_emb_coord(COpenMeshT::Point(ptmp(0), ptmp(1), ptmp(2)));
 	}
 	is_encoded_ = true;
-
-	////
-	//std::ofstream fout_mesh;
-	//fout_mesh.open("fDataMesh/embed_mesh.txt");
-	//for (auto viter = embMesh_.vertices_begin(); viter != embMesh_.vertices_end(); ++viter)
-	//	fout_mesh << embMesh_.point(*viter) << std::endl;
-	//fout_mesh.close();
 }
 
 void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
@@ -221,9 +216,31 @@ void CSstObject::decoding_vector_field(DenseMatrixXd & U,
 	}
 }
 
+void CSstObject::decoding_mesh()
+{
+	std::vector<COpenMeshT::Point> skeletal_pts = skeleton_.GetSkeletalPts();
+	std::vector<double> accu_arc_length = skeleton_.GetAccumArcLength();
+	std::vector<Mat3d> rmf_list; 
+	skeleton_.GetRMF(rmf_list);
+
+	// decoding
+	for (auto viter = def_trimesh_.vertices_begin(); viter != def_trimesh_.vertices_end(); viter++)
+	{
+		int sid = def_trimesh_.data(*viter).get_vlabel();
+		COpenMeshT::Point ptmp = def_trimesh_.data(*viter).get_emb_coord();
+		Vector3d p(ptmp[0], ptmp[1], ptmp[2]);
+		Vector3d s(skeletal_pts[sid][0], skeletal_pts[sid][1], skeletal_pts[sid][2]);
+		Vector3d v;
+		v =  rmf_list[sid].transpose()*p - s;
+		def_trimesh_.set_point(*viter, COpenMeshT::Point(v(0), v(1), v(2)));
+	}
+}
+
 void CSstObject::cross_section_transformed_due_to_skeleton_change()
 {
 	std::cout << "no cross-sections are deformed according to the skeleton's change" << std::endl;
+
+	
 }
 
 void CSstObject::set_parameters()

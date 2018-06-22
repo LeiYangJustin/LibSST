@@ -9,17 +9,28 @@
 #include "../DeformationAlg/sst_object.h"
 #include "file_io.h"
 
-//using namespace std;
-
 static std::string CONFIG_FILE{ "fDataInput/config_switch.txt" };   //输入文件名称
 static std::string DEF_CROSS_SECTIONS_FILE{ "fDataInput/def_cross_sections.txt" };   //输入文件名称
 
+// this is moved to file_io.h
 //enum SwitchType {sstExit, sstGlobal, sstLocal, sstPending};
 
 static SwitchType SWITCH(SwitchType::sstExit); // 全局开关
 
 int main(int argc ,char* argv)
 {
+	// setting the path
+	//sst_obj->SetParameters(
+	//	SRC_SKELETON_FILE,
+	//	DEF_SKELETON_FILE,
+	//	SRC_CROSS_SECTIONS_FILE,
+	//	DEF_CROSS_SECTIONS_FILE,
+	//	IN_MESH_FILE,
+	//	IN_EMB_MESH_FILE,
+	//	OUT_MESH_FILE,
+	//	OUT_EMB_MESH_FILE
+	//);
+
 	//////////////////////////////////////////////////////////////////////////
 
 	// read mesh
@@ -35,18 +46,6 @@ int main(int argc ,char* argv)
 
 	CSkeleton skeleton(p_skel_src_obj->GetCurve());
 	CSstObject* sst_obj = new CSstObject(skeleton, p_mesh_src_obj->GetMesh());
-
-	//sst_obj->SetParameters(
-	//	SRC_SKELETON_FILE,
-	//	DEF_SKELETON_FILE,
-	//	SRC_CROSS_SECTIONS_FILE,
-	//	DEF_CROSS_SECTIONS_FILE,
-	//	IN_MESH_FILE,
-	//	IN_EMB_MESH_FILE,
-	//	OUT_MESH_FILE,
-	//	OUT_EMB_MESH_FILE
-	//);
-
 	// ENCODING
 	sst_obj->Encode();
 
