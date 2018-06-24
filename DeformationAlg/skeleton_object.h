@@ -56,21 +56,24 @@ public:
 	};
 	int GetSid() const {
 		return skel_id_;
-	}
+	};
 
 	void SetClosed(bool b = true) {
 		is_closed_ = b;
-	}
+	};
 	bool IsClosed() const {
 		return is_closed_;
-	}
-
+	};
 	void SetDeformed(bool b = true) {
 		is_deformed_ = b;
-	}
+		if (b == false)
+		{
+			this->def_emb_prof_pts_.clear();
+		}
+	};
 	bool IsDeformed() const {
 		return is_deformed_;
-	}
+	};
 	//void Print();
 
 private:

@@ -60,7 +60,6 @@ int main(int argc ,char* argv)
 		cnt += 5;
 	}
 	std::cout << std::endl;
-
 	sst_obj->InitCrossSections(sid_list);
 	sst_obj->PrintSSTandMesh();
 
@@ -86,6 +85,9 @@ int main(int argc ,char* argv)
 		}
 		else if (SWITCH == SwitchType::sstGlobal)
 		{
+			//
+			sst_obj->ResetCrossSectionsAfterDeformation();
+
 			std::cout << "Continue the Global deformation...(UNDER CONSTRUCTION)" << std::endl;
 			CSkeleton def_skeleton;
 			CFileIO::read_skeleton("fDataRepo/def_skeleton.txt", def_skeleton);
@@ -100,11 +102,17 @@ int main(int argc ,char* argv)
 		// GO ON LOCAL, USING THE PRE-FACTORIZATION
 		else if (SWITCH == SwitchType::sstLocal)
 		{
+			//
+			sst_obj->ResetCrossSectionsAfterDeformation();
+
 			std::cout << "Continue the Local deformation...(UNDER CONSTRUCTION)" << std::endl;
 			std::vector<int> def_csid_list;
 			CFileIO::read_local_def_cs_id_from_config_file(CONFIG_FILE, def_csid_list);
 			std::string fname_dst = "fDataRepo/CSdata/dst_cross_sections";
 			std::string fname_src = "fDataRepo/CSdata/src_cross_sections";
+
+			// set up
+			sst_obj->SetDefCSList(def_csid_list);
 			for (int i = 0; i < def_csid_list.size(); i++)
 			{
 				std::ostringstream id_str;
@@ -121,21 +129,16 @@ int main(int argc ,char* argv)
 				fname_cs_dst.append(".txt");
 				std::vector<COpenMeshT::Point> dst_cs_pts;
 				CFileIO::read_cross_section_pts(fname_cs_dst, dst_cs_pts);
-				// if not true, we need to update the original cs as well
-				if (src_cs_pts.size() == dst_cs_pts.size()) {
-					sst_obj->RenewCSInfo(def_csid_list[i], src_cs_pts);
-					sst_obj->SetDefCSInfo(def_csid_list[i], dst_cs_pts);
-				}
-				else {
+				if (!sst_obj->RenewCSInfo(def_csid_list[i], src_cs_pts, dst_cs_pts)) {
 					std::cerr << "please make sure CS" << def_csid_list[i] << "'s info is correct" << std::endl;
 				}
 			}
 			sst_obj->LocalDeformSetup();
 			sst_obj->LocalDeformSolve();
 			//
-			std::cout << "Local deformation done" << std::endl;
 			bool is_deformed = true;
 			sst_obj->PrintMesh("fDataRepo/dst_lmesh.txt", "fDataRepo/dst_emb_lmesh.txt", is_deformed);
+			std::cout << "Local deformation done" << std::endl;
 		}
 	}
 

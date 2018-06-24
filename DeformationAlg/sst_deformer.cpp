@@ -108,13 +108,10 @@ void CSSTDeformer::LocalDeformationSolve(
 			p_mesh_def->data(def_vh).set_emb_coord(pt);
 		}
 	}
-
-	// decode
 }
 
 void CSSTDeformer::GlobalDeformationSetup(std::vector<CCrossSection> cs_list)
 {
-	deform_type_ = DeformType::Global;
 	std::pair<int, int> cs_pair(0, cs_list.size() - 1);
 	// renew deformer if it is not already computed
 	if (p_deformer_map_.find(cs_pair) == p_deformer_map_.end()) {
@@ -157,9 +154,24 @@ void CSSTDeformer::GlobalDeformationSolve(
 	// how to get this?
 	std::vector<int> roi_ids;
 	std::vector<COpenMeshT::Point> roi_pts;
+	for (auto viter = p_mesh->vertices_begin(); viter != p_mesh->vertices_end(); ++viter)
+	{
+		COpenMeshT::Point pt = p_mesh->data(*viter).get_emb_coord();
+		roi_ids.push_back(viter->idx());
+		roi_pts.push_back(pt);
+	}
+	
+	// solve
 	std::vector<COpenMeshT::Point> roi_vecs;
-	// get roi
 	global_deformation_solve(all_handles_vecs, roi_pts, p_deformer, roi_vecs);
+
+	// out
+	for (int j = 0; j < roi_ids.size(); j++)
+	{
+		COpenMeshT::Point pt = roi_vecs[j] + roi_pts[j];
+		COpenMeshT::VertexHandle def_vh = p_mesh_def->vertex_handle(roi_ids[j]);
+		p_mesh_def->set_point(def_vh, pt);
+	}
 }
 
 void CSSTDeformer::get_deformer(

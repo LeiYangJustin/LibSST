@@ -1,99 +1,58 @@
 #include "sst_object.h"
 #include "../GeneralTools/sorting_2d_pts.h"
 
-bool CSstObject::LocalDeformSetup()
+void CSstObject::LocalDeformSetup()
 {
-	// factorize the matrix on the left hand side
-	if (has_local_deformation_)
+	assert(has_local_deformation_);
+	std::vector<CCrossSection> def_cross_sections;
+	for (int i = 0; i < def_csid_list_.size(); i++)
 	{
-		// compute using the deformation information
-		def_cross_sections_.clear();
-		for (int i = 0; i < cross_sections_.size(); i++)
-		{
-			if (cross_sections_[i].IsDeformed()) {
-				def_cross_sections_.push_back(cross_sections_[i]);
-			}
-		}
-		deformer_->LocalDeformationSetUp(def_cross_sections_);
-		return true;
+		int id = def_csid_list_[i];
+		def_cross_sections.push_back(cross_sections_[id]);
 	}
-	else
-	{
-		std::cerr << "Cannot peform deformation as no information is supplied" << std::endl;
-		return false;
+	deformer_->LocalDeformationSetUp(def_cross_sections);
+}
+
+void CSstObject::GlobalDeformSetup(bool use_local_setup)
+{
+	assert(has_global_deformation_);
+	if (use_local_setup) {
+		std::cerr << "The locally supported RBF is not available now" << std::endl;
+		//// local support
+		//deformer_->SetUseLocalToSolveGlobal(use_local_setup);
+		//deformer_->LocalDeformationSetUp(def_cross_sections);
+	}
+	else {
+		deformer_->GlobalDeformationSetup(cross_sections_);
 	}
 }
 
-bool CSstObject::GlobalDeformSetup(bool use_local_setup)
+void CSstObject::LocalDeformSolve()
 {
-	if (has_global_deformation_)
+	assert(has_local_deformation_);
+	std::vector<CCrossSection> def_cross_sections;
+	for (int i = 0; i < def_csid_list_.size(); i++)
 	{
-		def_cross_sections_.clear();
-		for (int i = 0; i < cross_sections_.size(); i++)
-		{
-			if (cross_sections_[i].IsDeformed()) {
-				def_cross_sections_.push_back(cross_sections_[i]);
-			}
-		}
-		if (use_local_setup) {
-			// locally supported RBF (truncated)
-			deformer_->SetUseLocalToSolveGlobal(use_local_setup);
-			deformer_->LocalDeformationSetUp(this->def_cross_sections_);
-		}
-		else {
-			// globally supported RBF
-			deformer_->GlobalDeformationSetup(this->def_cross_sections_);
-		}
-		return true;
+		int id = def_csid_list_[i];
+		def_cross_sections.push_back(cross_sections_[id]);
 	}
-	else
-	{
-		std::cerr << "Cannot peform deformation as no information is supplied" << std::endl;
-		return false;
-	}
-}
 
-bool CSstObject::LocalDeformSolve()
-{
-	// provide right hand side
-	// factorize the matrix on the left hand side
-	if (has_local_deformation_)
-	{
-		// do some deformation
-		this->def_trimesh_ = this->trimesh_;
-		is_deformed_ = true;
-		deformer_->LocalDeformationSolve(this->def_cross_sections_, &this->trimesh_, &this->def_trimesh_);
-		decoding_mesh(); // have the deformed mesh in the original space
-		return true;
-	}
-	else
-	{
-		std::cerr << "Cannot peform deformation as no information is supplied" << std::endl;
-		return false;
-	}
+	this->def_trimesh_ = this->trimesh_;
+	deformer_->LocalDeformationSolve(def_cross_sections, &this->trimesh_, &this->def_trimesh_);
+	decoding_mesh(); // have the deformed mesh in the original space
+	is_deformed_ = true;
 }
 
 
-bool CSstObject::GlobalDeformSolve()
+void CSstObject::GlobalDeformSolve()
 {
-	// provide right hand side
-	// factorize the matrix on the left hand side
-	if (has_global_deformation_ && !deformer_->GetUseLocalToSolveGlobal())
+	assert(has_global_deformation_);
+	// use global support
+	if (!deformer_->GetUseLocalToSolveGlobal())
 	{
-		// do some deformation
-		deformer_->GlobalDeformationSolve(this->def_cross_sections_, &this->trimesh_, &this->def_trimesh_);
-		return true;
+		deformer_->GlobalDeformationSolve(cross_sections_, &this->trimesh_, &this->def_trimesh_);
 	}
-	else if (has_global_deformation_ && deformer_->GetUseLocalToSolveGlobal())
-	{
-		deformer_->LocalDeformationSolve(this->def_cross_sections_, &this->trimesh_, &this->def_trimesh_);
-		return true;
-	}
-	else
-	{
-		std::cerr << "Cannot peform deformation as no information is supplied" << std::endl;
-		return false;
-	}
+	// use local support
 }
 
 void CSstObject::encoding_mesh()
@@ -236,11 +195,43 @@ void CSstObject::decoding_mesh()
 	}
 }
 
-void CSstObject::cross_section_transformed_due_to_skeleton_change()
+void CSstObject::skeleton_driven_cross_section_transformation()
 {
 	std::cout << "no cross-sections are deformed according to the skeleton's change" << std::endl;
 
-	
+	// src skeleton
+	std::vector<COpenMeshT::Point> skeletal_pts = skeleton_.GetSkeletalPts();
+	std::vector<Mat3d> rmf_list;
+	skeleton_.GetRMF(rmf_list);
+
+	// def skeleton
+	std::vector<COpenMeshT::Point> def_skeletal_pts = def_skeleton_.GetSkeletalPts();
+	std::vector<Mat3d> def_rmf_list;
+	def_skeleton_.GetRMF(def_rmf_list);
+
+	std::vector<CCrossSection> def_cs_list;
+	for (int i = 0; i < cross_sections_.size(); i++)
+	{
+		CCrossSection cs = cross_sections_[i];
+		
+		int sid = cs.GetSid();
+		std::vector<COpenMeshT::Point> cspts = cs.GetProfPts();
+		Vector3d psrc(skeletal_pts[sid][0], skeletal_pts[sid][1], skeletal_pts[sid][2]);
+		Vector3d pdef(def_skeletal_pts[sid][0], def_skeletal_pts[sid][1], def_skeletal_pts[sid][2]);
+		Mat3d Tsrc = rmf_list[sid];
+		Mat3d Tdeftranspose = def_rmf_list[sid].transpose();
+		for (int j = 0; j < cspts.size(); j++)
+		{
+			Vector3d csrc(cspts[j][0], cspts[j][1], cspts[j][2]);
+			Vector3d cdef = Tdeftranspose*Tsrc * csrc + Tdeftranspose*Tsrc*psrc - Tdeftranspose*pdef;
+			cspts[j] = COpenMeshT::Point(cdef(0), cdef(1), cdef(2));
+		}
+		
+		// update cs;
+		cs.SetDefEmbProfPts(cspts);
+		cs.SetDeformed(true);
+		cross_sections_[i] = cs;
+	}
 }
 
 void CSstObject::set_parameters()
@@ -261,6 +252,12 @@ void CSstObject::set_parameters()
 	fname_dst_emb_mesh_ = "fDataRepo/dst_emb_mesh.txt";
 }
 
+void CSstObject::ResetCrossSectionsAfterDeformation()
+{
+	for (int i = 0; i < cross_sections_.size(); i++)
+		cross_sections_[i].SetDeformed(false);
+}
+
 bool CSstObject::PrintSSTandMesh()
 {
 	// print src
@@ -272,11 +269,19 @@ bool CSstObject::PrintSSTandMesh()
 	if (!PrintMesh(fname_src_mesh_, fname_src_emb_mesh_))
 		return false;
 
+	std::vector<CCrossSection> def_cross_sections;
+	for (int i = 0; i < cross_sections_.size(); i++)
+	{
+		if (cross_sections_[i].IsDeformed()) {
+			def_cross_sections.push_back(cross_sections_[i]);
+		}
+	}
+
 	// print def
 	if (is_deformed_) {
 		if (!PrintSkeleton(fname_dst_skeleton_, def_skeleton_))
 			return false;
-		if (!PrintCrossSectionList(fname_dst_cross_sections_, def_cross_sections_))
+		if (!PrintCrossSectionList(fname_dst_cross_sections_, def_cross_sections))
 			return false;
 		if (!PrintMesh(fname_dst_mesh_, fname_dst_emb_mesh_))
 			return false;
@@ -379,18 +384,21 @@ bool CSstObject::PrintSkeleton(std::string fname, const CSkeleton &s)
 	
 
 	// write
-	fout_file << "##Skeleton" << std::endl;
-	fout_file << "#Points" << std::endl;
 	for (int i = 0; i < skel_pts.size(); i++) {
-		fout_file << skel_pts[i] << ", " << alength[i] <<  std::endl;
+		fout_file << skel_pts[i] <<  std::endl;
 	}
-	fout_file << "#RMF" << std::endl;
-	for (int i = 0; i < rmf_list.size(); i++) {
-		fout_file << rmf_list[i].row(0) << ", "
-			<< rmf_list[i].row(1) << ", "
-			<< rmf_list[i].row(2) << ", "
-			<< std::endl;
-	}
+	//fout_file << "##Skeleton" << std::endl;
+	//fout_file << "#Points" << std::endl;
+	//for (int i = 0; i < skel_pts.size(); i++) {
+	//	fout_file << skel_pts[i] << ", " << alength[i] <<  std::endl;
+	//}
+	//fout_file << "#RMF" << std::endl;
+	//for (int i = 0; i < rmf_list.size(); i++) {
+	//	fout_file << rmf_list[i].row(0) << ", "
+	//		<< rmf_list[i].row(1) << ", "
+	//		<< rmf_list[i].row(2) << ", "
+	//		<< std::endl;
+	//}
 	fout_file.close();
 	return true;
 }
