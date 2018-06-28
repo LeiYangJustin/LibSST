@@ -17,6 +17,5 @@ typedef CGAL::Polygon_2<K>						KPolygon2;
 #include <CGAL/Segment_2.h>
 typedef CGAL::Segment_2<K>						KSegment2;
 
-
 #endif // ! CGAL_PREDEF_H
 

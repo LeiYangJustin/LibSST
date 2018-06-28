@@ -6,7 +6,7 @@
 
 #include<Eigen/Dense>
 #include<Eigen/Sparse>
-
+#include<Eigen/Householder>
 typedef Eigen::Vector3d					Point3d;
 typedef Eigen::Vector3d					Vector3d;
 typedef Eigen::VectorXd					VectorXd;
@@ -18,6 +18,7 @@ typedef Eigen::Matrix3d					Mat3d;
 typedef Eigen::Matrix4d					Mat4d;
 typedef Eigen::SparseMatrix<double>		SparseMatrixXd;
 typedef Eigen::SparseMatrix<int>		SparseMatrixXi;
+
 
 
 #endif // !C_DEFORM_TYPE_H

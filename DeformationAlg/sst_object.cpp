@@ -4,6 +4,9 @@
 void CSstObject::LocalDeformSetup()
 {
 	assert(has_local_deformation_);
+	std::cout << "Time spent for Local Setup: " << std::endl;
+	auto t1 = std::chrono::high_resolution_clock::now();
+	// SOME CODES
 	std::vector<CCrossSection> def_cross_sections;
 	for (int i = 0; i < def_csid_list_.size(); i++)
 	{
@@ -11,6 +14,18 @@ void CSstObject::LocalDeformSetup()
 		def_cross_sections.push_back(cross_sections_[id]);
 	}
 	deformer_->LocalDeformationSetUp(def_cross_sections);
+	// SOME CODES
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+	std::cout << time_span.count() << " seconds" << std::endl;
+
+	//std::vector<CCrossSection> def_cross_sections;
+	//for (int i = 0; i < def_csid_list_.size(); i++)
+	//{
+	//	int id = def_csid_list_[i];
+	//	def_cross_sections.push_back(cross_sections_[id]);
+	//}
+	//deformer_->LocalDeformationSetUp(def_cross_sections);
 }
 
 void CSstObject::GlobalDeformSetup(bool use_local_setup)
@@ -23,7 +38,15 @@ void CSstObject::GlobalDeformSetup(bool use_local_setup)
 		//deformer_->LocalDeformationSetUp(def_cross_sections);
 	}
 	else {
+		//deformer_->GlobalDeformationSetup(cross_sections_);
+
+		std::cout << "Time spent for Global Setup: " << std::endl;
+		auto t1 = std::chrono::high_resolution_clock::now();
+		// SOME CODES
 		deformer_->GlobalDeformationSetup(cross_sections_);
+		auto t2 = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+		std::cout << time_span.count() << " seconds" << std::endl;
 	}
 }
 
@@ -36,7 +59,6 @@ void CSstObject::LocalDeformSolve()
 		int id = def_csid_list_[i];
 		def_cross_sections.push_back(cross_sections_[id]);
 	}
-
 	this->def_trimesh_ = this->trimesh_;
 	deformer_->LocalDeformationSolve(def_cross_sections, &this->trimesh_, &this->def_trimesh_);
 	decoding_mesh(); // have the deformed mesh in the original space
@@ -50,7 +72,18 @@ void CSstObject::GlobalDeformSolve()
 	// use global support
 	if (!deformer_->GetUseLocalToSolveGlobal())
 	{
+		//deformer_->GlobalDeformationSolve(cross_sections_, &this->trimesh_, &this->def_trimesh_);
+
+		std::cout << "Time spent for Global Solve: " << std::endl;
+		auto t1 = std::chrono::high_resolution_clock::now();
+		// SOME CODES
+		def_trimesh_ = trimesh_;
+		std::cout << trimesh_.n_vertices() << std::endl;
+		std::cout << def_trimesh_.n_vertices() << std::endl;
 		deformer_->GlobalDeformationSolve(cross_sections_, &this->trimesh_, &this->def_trimesh_);
+		auto t2 = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+		std::cout << time_span.count() << " seconds" << std::endl;
 	}
 	// use local support
 }
@@ -82,9 +115,9 @@ void CSstObject::encoding_mesh()
 		Vector3d v(trimesh_.point(*viter)[0], trimesh_.point(*viter)[1], trimesh_.point(*viter)[2]);
 		Vector3d s(skeletal_pts[id_min][0], skeletal_pts[id_min][1], skeletal_pts[id_min][2]);
 		ptmp = rmf_list[id_min] * (v - s);
-		ptmp(0) = accu_arc_length[id_min];
+		//ptmp(0) = accu_arc_length[id_min];
 		// or ?
-		// ptmp(0) += accu_arc_length[id_min];
+		ptmp(0) += accu_arc_length[id_min];
 		trimesh_.data(*viter).set_emb_coord(COpenMeshT::Point(ptmp(0), ptmp(1), ptmp(2)));
 	}
 	is_encoded_ = true;
@@ -93,15 +126,20 @@ void CSstObject::encoding_mesh()
 void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 {
 	//std::vector<int> sid_list;
+	std::vector<Mat3d> rmf_list; 
+	skeleton_.GetRMF(rmf_list);
 	for (int i = 0; i < sid_list.size(); i++) {
 		int sid = sid_list[i];
 		COpenMeshT::Point cemb(skeleton_.GetAccumArcLength()[sid], 0.0, 0.0);
-		std::vector<COpenMeshT::Point> cs_pts;
-		extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), cs_pts);
+		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
+		COpenMeshT::Point tang_vec(rmf_list[sid](0, 0), rmf_list[sid](0, 1), rmf_list[sid](0, 2));
+		extracting_single_cross_section(skeleton_.GetSkeletalPts()[sid], tang_vec, cs_pts);
+		extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), emb_cs_pts, true);
 		// init cs
 		CCrossSection cs;
 		cs.SetSid(sid);
-		cs.SetEmbProfPts(cs_pts);
+		cs.SetProfPts(cs_pts);
+		cs.SetEmbProfPts(emb_cs_pts);
 		cs.SetClosed(false);
 		cs.SetDeformed(false);
 		//cs.SetProfPts();
@@ -110,9 +148,10 @@ void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 }
 
 void CSstObject::extracting_single_cross_section(COpenMeshT::Point center, 
-	COpenMeshT::Point normal, std::vector<COpenMeshT::Point>& cs_pts)
+	COpenMeshT::Point normal, std::vector<COpenMeshT::Point>& cs_pts, bool is_emb)
 {
 	cs_pts.clear();
+	assert(is_encoded_);
 
 	// circulating the mesh to find edges with two endpoints having difference sign to the plane
 	int cnt = 0;
@@ -123,7 +162,7 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 		COpenMeshT::VertexHandle vh_to = trimesh_.to_vertex_handle(heh);
 
 		COpenMeshT::Point p_from, p_to;
-		if (is_encoded_) {
+		if (is_emb) {
 			p_from = trimesh_.data(vh_from).get_emb_coord();
 			p_to = trimesh_.data(vh_to).get_emb_coord();
 		}
@@ -151,10 +190,15 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 			}
 		}
 	}
+
+	// try CGAL::Optimal Transportation Curve Reconstruction
 	// sorting the vertices
 	CGeoCalculator::pts_sorting_alg(cs_pts);
 	CGeoCalculator::simplify_polygon(cs_pts);
-	CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
+	if (has_global_deformation_)
+		CGeoCalculator::sample_polygon(cs_pts, 0.02, true);
+	else
+		CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
 }
 
 void CSstObject::decoding_vector_field(DenseMatrixXd & U, 
@@ -186,18 +230,19 @@ void CSstObject::decoding_mesh()
 	for (auto viter = def_trimesh_.vertices_begin(); viter != def_trimesh_.vertices_end(); viter++)
 	{
 		int sid = def_trimesh_.data(*viter).get_vlabel();
-		COpenMeshT::Point ptmp = def_trimesh_.data(*viter).get_emb_coord();
-		Vector3d p(ptmp[0], ptmp[1], ptmp[2]);
-		Vector3d s(skeletal_pts[sid][0], skeletal_pts[sid][1], skeletal_pts[sid][2]);
-		Vector3d v;
-		v =  rmf_list[sid].transpose()*p - s;
-		def_trimesh_.set_point(*viter, COpenMeshT::Point(v(0), v(1), v(2)));
+		COpenMeshT::VertexHandle vh0 = trimesh_.vertex_handle(viter->idx());
+		COpenMeshT::Point p0 = trimesh_.data(vh0).get_emb_coord();
+		COpenMeshT::Point p1 = def_trimesh_.data(*viter).get_emb_coord();
+		Vector3d d0(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]);
+		Vector3d d1 = rmf_list[sid].transpose()*d0;
+		COpenMeshT::Point ptmp = def_trimesh_.point(*viter) + COpenMeshT::Point(d1(0), d1(1), d1(2));
+		def_trimesh_.set_point(*viter, ptmp);
 	}
 }
 
 void CSstObject::skeleton_driven_cross_section_transformation()
 {
-	std::cout << "no cross-sections are deformed according to the skeleton's change" << std::endl;
+	//std::cout << "no cross-sections are deformed according to the skeleton's change" << std::endl;
 
 	// src skeleton
 	std::vector<COpenMeshT::Point> skeletal_pts = skeleton_.GetSkeletalPts();
@@ -223,7 +268,7 @@ void CSstObject::skeleton_driven_cross_section_transformation()
 		for (int j = 0; j < cspts.size(); j++)
 		{
 			Vector3d csrc(cspts[j][0], cspts[j][1], cspts[j][2]);
-			Vector3d cdef = Tdeftranspose*Tsrc * csrc + Tdeftranspose*Tsrc*psrc - Tdeftranspose*pdef;
+			Vector3d cdef = Tdeftranspose*Tsrc * csrc - Tdeftranspose*Tsrc*psrc + pdef;
 			cspts[j] = COpenMeshT::Point(cdef(0), cdef(1), cdef(2));
 		}
 		
@@ -300,7 +345,6 @@ bool CSstObject::PrintMesh(std::string fname_original, std::string fname_embedde
 			return false;
 	}
 	else {
-
 		if (!PrintMesh(fname_original, def_trimesh_, !is_embedded))
 			return false;
 		if (!PrintMesh(fname_embedded, def_trimesh_, is_embedded))

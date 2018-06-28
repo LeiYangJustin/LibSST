@@ -64,7 +64,7 @@ private:
 		const std::vector<COpenMeshT::Point> all_handles_vecs,
 		const std::vector<COpenMeshT::Point> roi_pts,
 		CMeshDeformation* p_deformer,
-		std::vector<COpenMeshT::Point> roi_vecs);
+		std::vector<COpenMeshT::Point> &roi_vecs);
 
 	//void get_ROI_pids(std::pair<int, int> csid_pair, std::vector<int> roi_ids);
 

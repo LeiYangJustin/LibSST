@@ -36,7 +36,7 @@ public:
 
 private:
 	//DenseMatrixXd pts_handles_;
-	Eigen::ColPivHouseholderQR<DenseMatrixXd> KMQR_;
+	Eigen::ColPivHouseholderQR<DenseMatrixXd> KMQR_; // high accuracy but low efficiency
 	Mat3d S_;
 	DenseMatrixXd pts_handles_;
 

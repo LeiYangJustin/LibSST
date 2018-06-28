@@ -50,7 +50,7 @@ public:
 	// pt sorting alg; 
 	static void pts_sorting_alg(std::vector<COpenMeshT::Point> &pts);
 	static void simplify_polygon(std::vector<COpenMeshT::Point> &pts, double dT = 0.5);
-
+	static void reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts);
 	// spacing = a percentage of step size over total length
 	static void sample_polygon(std::vector<COpenMeshT::Point> &pts, double spacing, bool is_closed);
 };

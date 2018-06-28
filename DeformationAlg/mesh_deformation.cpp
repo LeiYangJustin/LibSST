@@ -1,4 +1,5 @@
 #include "mesh_deformation.h"
+#include <chrono>
 
 CMeshDeformation::CMeshDeformation()
 {
@@ -24,6 +25,7 @@ void CMeshDeformation::SetUp(const DenseMatrixXd & pts_handles)
 		KerMat.row(i) = v;
 	}
 	KMQR_ = KerMat.colPivHouseholderQr();
+	//std::cout << KerMat.rows() << ", " << KerMat.cols() << std::endl;
 }
 
 void CMeshDeformation::Solve(
@@ -80,15 +82,22 @@ void CMeshDeformation::Solve(
 	const DenseMatrixXd & roi_pts, 
 	DenseMatrixXd & roi_vecs)
 {
+	// SOME CODES
 	DenseMatrixXd w = KMQR_.solve(vecs_handles);
 	// obtain the (embedded) deformation fields
 	int numROIPts = roi_pts.rows();
 	roi_vecs.resize(numROIPts, 3);
 	roi_vecs.setZero();
+
 	for (int i = 0; i < numROIPts; i++) {
+		//std::cout << "Time spent for decomposition Solve: " << std::endl;
+		//auto t1 = std::chrono::high_resolution_clock::now();
 		Eigen::VectorXd v;
 		computeKernelMatrixRow(v, roi_pts.row(i), pts_handles_, S_);
 		roi_vecs.row(i) = w.transpose()*v;
+		//auto t2 = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+		//std::cout << time_span.count() << " seconds" << std::endl;
 	}
 }
 
@@ -204,11 +213,25 @@ void CMeshDeformation::computeKernelMatrixRow(VectorXd & v,
 	int numHandles = handle_sites.rows();
 	v.resize(numHandles);
 	v.setZero();
-	for (int i = 0; i < numHandles; i++) {
-		// this is not compact
-		Vector3d vtmp = M*(p - handle_sites.row(i).transpose());
-		v(i) = pow(vtmp.norm(), 3);
+
+	// accerlarate
+	if (M.isIdentity()) {
+		for (int i = 0; i < numHandles; i++) {
+			// this is not compact
+			Point3d c = handle_sites.row(i);
+			Vector3d vtmp = p - c;
+			v(i) = vtmp.norm()*vtmp.norm()*vtmp.norm();
+		}
 	}
+	else {
+		for (int i = 0; i < numHandles; i++) {
+			// this is not compact
+			Point3d c = handle_sites.row(i);
+			Vector3d vtmp = M*(p - c);
+			v(i) = vtmp.norm()*vtmp.norm()*vtmp.norm();
+		}
+	}
+
 }
 
 void CMeshDeformation::givensTransform(const double x, const double y, Mat2d & m)

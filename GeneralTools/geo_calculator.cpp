@@ -15,6 +15,7 @@
 #include <CGAL/convex_hull_2.h>
 #include <CGAL/Polyline_simplification_2/simplify.h>
 #include <CGAL/Polyline_simplification_2/Squared_distance_cost.h>
+#include <CGAL/Optimal_transportation_reconstruction_2.h>
 
 double CGeoCalculator::ComputeDistFromPoint2Plane(COpenMeshT::Point p, COpenMeshT::Point b, COpenMeshT::Point n)
 {

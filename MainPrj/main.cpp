@@ -81,14 +81,15 @@ int main(int argc ,char* argv)
 		// GO ON GLOBAL, USING THE PRE-FACTORIZATION
 		else if (SWITCH == SwitchType::sstPending) {
 			// pending
-			//std::cout << "pending" << std::endl;
+			std::cout << "Pending for 10 seconds...";
+			std::this_thread::sleep_for(std::chrono::seconds(10));
 		}
 		else if (SWITCH == SwitchType::sstGlobal)
 		{
 			//
 			sst_obj->ResetCrossSectionsAfterDeformation();
 
-			std::cout << "Continue the Global deformation...(UNDER CONSTRUCTION)" << std::endl;
+			std::cout << "Continue the Global deformation..." << std::endl;
 			CSkeleton def_skeleton;
 			CFileIO::read_skeleton("fDataRepo/def_skeleton.txt", def_skeleton);
 			sst_obj->SetDefSkeleton(def_skeleton);
@@ -105,7 +106,7 @@ int main(int argc ,char* argv)
 			//
 			sst_obj->ResetCrossSectionsAfterDeformation();
 
-			std::cout << "Continue the Local deformation...(UNDER CONSTRUCTION)" << std::endl;
+			std::cout << "Continue the Local deformation..." << std::endl;
 			std::vector<int> def_csid_list;
 			CFileIO::read_local_def_cs_id_from_config_file(CONFIG_FILE, def_csid_list);
 			std::string fname_dst = "fDataRepo/CSdata/dst_cross_sections";

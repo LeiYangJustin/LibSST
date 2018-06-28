@@ -130,7 +130,7 @@ private:
 	void extracting_cross_sections(std::vector<int> sid_list);
 	void extracting_single_cross_section(
 		COpenMeshT::Point c, COpenMeshT::Point d, 
-		std::vector<COpenMeshT::Point> &cs_pts);
+		std::vector<COpenMeshT::Point> &cs_pts, bool is_emb = false);
 	void decoding_vector_field(DenseMatrixXd & U,
 		const DenseMatrixXd & V, const std::vector<int> ids);
 	void decoding_mesh();

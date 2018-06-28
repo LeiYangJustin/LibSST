@@ -33,9 +33,9 @@ void CSSTDeformer::LocalDeformationSetUp(
 			get_deformer(left_cs_pts, right_cs_pts, p_deformer);
 			p_deformer_map_[cs_pair] = p_deformer;
 		}
-		else {
-			std::cout << "we have the deformer, so we don't need to set up a new one" << std::endl;
-		}
+		//else {
+		//	std::cout << "we have the deformer, so we don't need to set up a new one" << std::endl;
+		//}
 	}
 }
 
@@ -63,7 +63,7 @@ void CSSTDeformer::LocalDeformationSolve(
 		bound_xCoords.first = left_def_cs_pts[0][0];
 		bound_xCoords.second = right_def_cs_pts[0][0];
 
-		std::cout << bound_xCoords.first << " " << bound_xCoords.second << std::endl;
+		//std::cout << bound_xCoords.first << " " << bound_xCoords.second << std::endl;
 
 		// check
 		if (left_cs_pts.size() != left_def_cs_pts.size()) {
@@ -149,6 +149,7 @@ void CSSTDeformer::GlobalDeformationSolve(
 	std::vector<COpenMeshT::Point> all_handles_vecs;
 	for (int j = 0; j < all_cs_pts.size(); j++) {
 		all_handles_vecs.push_back(all_def_cs_pts[j] - all_cs_pts[j]);
+		//std::cout << all_def_cs_pts[j] - all_cs_pts[j] << std::endl;
 	}
 	CMeshDeformation* p_deformer = p_deformer_map_.begin()->second;
 	// how to get this?
@@ -156,7 +157,7 @@ void CSSTDeformer::GlobalDeformationSolve(
 	std::vector<COpenMeshT::Point> roi_pts;
 	for (auto viter = p_mesh->vertices_begin(); viter != p_mesh->vertices_end(); ++viter)
 	{
-		COpenMeshT::Point pt = p_mesh->data(*viter).get_emb_coord();
+		COpenMeshT::Point pt = p_mesh->point(*viter);
 		roi_ids.push_back(viter->idx());
 		roi_pts.push_back(pt);
 	}
@@ -168,7 +169,9 @@ void CSSTDeformer::GlobalDeformationSolve(
 	// out
 	for (int j = 0; j < roi_ids.size(); j++)
 	{
+		//std::cout << j << std::endl;
 		COpenMeshT::Point pt = roi_vecs[j] + roi_pts[j];
+		//std::cout << roi_vecs[j].norm() << std::endl;
 		COpenMeshT::VertexHandle def_vh = p_mesh_def->vertex_handle(roi_ids[j]);
 		p_mesh_def->set_point(def_vh, pt);
 	}
@@ -210,7 +213,9 @@ void CSSTDeformer::get_deformer(const std::vector<COpenMeshT::Point> all_cs_pts,
 	DenseMatrixXd pts_handles;
 	pts_handles = Eigen::Map<Eigen::MatrixXd, Eigen::Unaligned>(handlepts.data(), 3, handlepts.size() / 3);
 	pts_handles.transposeInPlace();
+
 	deformer->SetUp(pts_handles);
+
 }
 
 
@@ -266,7 +271,7 @@ void CSSTDeformer::global_deformation_solve(
 	const std::vector<COpenMeshT::Point> all_handles_vecs, 
 	const std::vector<COpenMeshT::Point> roi_pts, 
 	CMeshDeformation * p_deformer, 
-	std::vector<COpenMeshT::Point> roi_vecs)
+	std::vector<COpenMeshT::Point> &roi_vecs)
 {
 	// convert std::vector<Point> to vector<double>
 	std::vector<double> all_handles_vecs_data, roi_pts_data;
