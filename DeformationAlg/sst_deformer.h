@@ -3,7 +3,6 @@
 
 #include "def_alg_prereq.h"
 #include "../DataColle/mesh_object.h"
-#include "../GeneralTools/geo_calculator.h"
 //#include "sst_object.h"
 #include "skeleton_object.h"
 #include "mesh_deformation.h"

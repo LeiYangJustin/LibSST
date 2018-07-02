@@ -106,7 +106,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>DataColle.lib;OpenMeshToolsd.lib;OpenMeshCored.lib;CGAL-vc140-mt-gd-4.9.lib;CGAL_ImageIO-vc140-mt-gd-4.9.lib;CGAL_Qt5-vc140-mt-gd-4.9.lib;CGAL_Core-vc140-mt-gd-4.9.lib;libgmp-10.lib;libmpfr-4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DataColle.lib;OpenMeshToolsd.lib;OpenMeshCored.lib;CGAL-vc140-mt-gd-4.12.lib;CGAL_ImageIO-vc140-mt-gd-4.12.lib;CGAL_Core-vc140-mt-gd-4.12.lib;libgmp-10.lib;libmpfr-4.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;$(CGAL)\auxiliary\gmp\lib;$(CGAL)\winbuild\lib;$(OPENMESH)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -136,15 +136,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;GENERAL_TOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;CGAL_EIGEN3_ENABLED;USE_FORWARD_DECL;_USE_MATH_DEFINES;INCLUDE_TEMPLATES;CGAL_USE_MPFR;CGAL_USE_GMP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(EIGEN_ROOT);$(OPENMESH)\include;$(CGAL)\include;$(CGAL)\auxiliary\gmp\include;$(CGAL)\winbuild\include;$(BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(EIGEN_ROOT);$(OPENMESH)\include;$(CGAL12)\include;$(CGAL12)\auxiliary\gmp\include;$(CGAL12)\winbuild\include;$(BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;$(CGAL)\auxiliary\gmp\lib;$(CGAL)\winbuild\lib;$(OPENMESH)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DataColle.lib;OpenMeshTools.lib;OpenMeshCore.lib;CGAL-vc140-mt-4.9.lib;CGAL_ImageIO-vc140-mt-4.9.lib;CGAL_Qt5-vc140-mt-4.9.lib;CGAL_Core-vc140-mt-4.9.lib;libgmp-10.lib;libmpfr-4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;$(CGAL12)\auxiliary\gmp\lib;$(CGAL12)\winbuild\lib;$(OPENMESH)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>DataColle.lib;OpenMeshTools.lib;OpenMeshCore.lib;CGAL-vc140-mt-4.12.lib;CGAL_ImageIO-vc140-mt-4.12.lib;CGAL_Core-vc140-mt-4.12.lib;libgmp-10.lib;libmpfr-4.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

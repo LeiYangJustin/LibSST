@@ -1,6 +1,7 @@
 #include "sst_deformer.h"
-#include "../GeneralTools/visibility_graph.h"
-#include "../GeneralTools/sorting_2d_pts.h"
+#include "../GeneralTools/geo_calculator.h"
+//#include "../GeneralTools/visibility_graph.h"
+//#include "../GeneralTools/sorting_2d_pts.h"
 
 CSSTDeformer::CSSTDeformer()
 	: use_local_to_solve_global(false), deform_type_(DeformType::NotGiven)

@@ -16,6 +16,7 @@
 #include <CGAL/Polyline_simplification_2/simplify.h>
 #include <CGAL/Polyline_simplification_2/Squared_distance_cost.h>
 #include <CGAL/Optimal_transportation_reconstruction_2.h>
+#include <CGAL/point_generators_2.h>
 
 double CGeoCalculator::ComputeDistFromPoint2Plane(COpenMeshT::Point p, COpenMeshT::Point b, COpenMeshT::Point n)
 {
@@ -507,4 +508,49 @@ void CGeoCalculator::sample_polygon(std::vector<COpenMeshT::Point>& pts, double 
 	//if (is_closed)
 	//	samples.push_back(samples.front());
 	pts = samples;
+}
+
+//https://doc.cgal.org/latest/Optimal_transportation_reconstruction_2/index.html#Chapter_Optimal_Transportation_Curve_Reconstruction
+void CGeoCalculator::reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts)
+{
+
+	typedef CGAL::Optimal_transportation_reconstruction_2<K>    Otr_2;
+	std::vector<KPoint2> points;
+
+	std::string filename = "fDataInput/test/blob00.xy";
+	std::ifstream ifs(filename.c_str());
+	KPoint2 point;
+	while (ifs >> point)
+		points.push_back(point);
+	ifs.close();
+
+	std::cout << points.size() << std::endl;
+
+	Otr_2 otr2(points);
+	otr2.set_use_flip(true);
+	otr2.run_under_wasserstein_tolerance(0.05);
+	
+
+	std::cout << "(-------------List output---------- )" << std::endl;
+	std::vector<KPoint2> ptss;
+	std::vector<std::size_t> isolated_vertices;
+	std::vector<std::pair<std::size_t, std::size_t> > edges;
+
+	otr2.indexed_output(
+		std::back_inserter(ptss),
+		std::back_inserter(isolated_vertices),
+		std::back_inserter(edges));
+
+	// points
+	std::vector<KPoint2>::iterator pit;
+	for (pit = ptss.begin(); pit != ptss.end(); pit++)
+		std::cout << *pit << std::endl;
+	// isolated vertices
+	std::vector<std::size_t>::iterator vit;
+	for (vit = isolated_vertices.begin(); vit != isolated_vertices.end(); vit++)
+		std::cout << "1 " << *vit << std::endl;
+	// edges
+	std::vector<std::pair<std::size_t, std::size_t> >::iterator eit;
+	for (eit = edges.begin(); eit != edges.end(); eit++)
+		std::cout << "2 " << eit->first << " " << eit->second << std::endl;
 }

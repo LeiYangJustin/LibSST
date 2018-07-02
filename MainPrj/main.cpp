@@ -7,6 +7,7 @@
 #include "../DataColle/mesh_object.h"
 #include "../DeformationAlg/skeleton_object.h"
 #include "../DeformationAlg/sst_object.h"
+#include "../GeneralTools/geo_calculator.h"
 #include "file_io.h"
 
 static std::string CONFIG_FILE{ "fDataInput/config_switch.txt" };   //输入文件名称
@@ -82,7 +83,11 @@ int main(int argc ,char* argv)
 		else if (SWITCH == SwitchType::sstPending) {
 			// pending
 			std::cout << "Pending for 10 seconds...";
-			std::this_thread::sleep_for(std::chrono::seconds(10));
+			//std::this_thread::sleep_for(std::chrono::seconds(10));
+
+			std::cout << "testing..." << std::endl;
+			std::vector<COpenMeshT::Point> pts;
+			CGeoCalculator::reconstruct_curve_from_pointset(pts);
 		}
 		else if (SWITCH == SwitchType::sstGlobal)
 		{

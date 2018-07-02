@@ -136,14 +136,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;CGAL_EIGEN3_ENABLED;USE_FORWARD_DECL;_USE_MATH_DEFINES;OM_STATIC_BUILD;INCLUDE_TEMPLATES;CGAL_USE_MPFR;CGAL_USE_GMP;DEF_ALGCOLLE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(EIGEN_ROOT);$(OPENCV_DIR)\include;$(OPENMESH)\include;$(BOOST_INCLUDEDIR);$(CGAL)\include;$(CGAL)\auxiliary\gmp\include;$(CGAL)\winbuild\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(EIGEN_ROOT);$(OPENCV_DIR)\include;$(OPENMESH)\include;$(BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>DataColle.lib;GeneralTools.lib;OpenMeshTools.lib;OpenMeshCore.lib;CGAL-vc140-mt-4.9.lib;CGAL_ImageIO-vc140-mt-4.9.lib;CGAL_Qt5-vc140-mt-4.9.lib;CGAL_Core-vc140-mt-4.9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DataColle.lib;GeneralTools.lib;OpenMeshTools.lib;OpenMeshCore.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;$(OPENMESH)\lib;$(CGAL)\winbuild\lib;$(CGAL)\auxiliary\gmp\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

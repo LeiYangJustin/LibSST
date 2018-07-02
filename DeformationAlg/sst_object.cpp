@@ -1,5 +1,6 @@
 #include "sst_object.h"
-#include "../GeneralTools/sorting_2d_pts.h"
+#include "../GeneralTools/geo_calculator.h"
+//#include "../GeneralTools/sorting_2d_pts.h"
 
 void CSstObject::LocalDeformSetup()
 {
@@ -193,6 +194,8 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 
 	// try CGAL::Optimal Transportation Curve Reconstruction
 	// sorting the vertices
+	//CGeoCalculator::reconstruct_curve_from_pointset(cs_pts);
+
 	CGeoCalculator::pts_sorting_alg(cs_pts);
 	CGeoCalculator::simplify_polygon(cs_pts);
 	if (has_global_deformation_)
