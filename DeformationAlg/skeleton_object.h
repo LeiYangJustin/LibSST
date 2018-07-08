@@ -9,7 +9,7 @@
 class DEF_ALGCOLLE_CLASS CCrossSection
 {
 public:
-	CCrossSection() { };
+	CCrossSection():is_closed_(false), is_deformed_(false) {  };
 	~CCrossSection() { };
 	CCrossSection(const CCrossSection &b) {
 		prof_pts_ = b.GetProfPts();

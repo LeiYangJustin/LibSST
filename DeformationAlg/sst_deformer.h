@@ -38,6 +38,11 @@ public:
 		COpenMeshT *mesh,
 		COpenMeshT *def_mesh);
 
+	void Update()
+	{
+		p_deformer_map_.clear();
+	}
+
 private:
 	std::map<std::pair<int, int>, CMeshDeformation*> p_deformer_map_;
 	std::vector<std::pair<int, int>> cs_pair_list_;

@@ -73,8 +73,9 @@ bool CDataIO::ReadCurve(std::string fname, CCurveObject & res_curve_obj, double 
 	}else
 	{
 		std::cerr << "Error in using CDataIO::ReadCurve: Data dim does not match" << std::endl;
+		curvefile.close();
 		return false;
 	}
-
+	curvefile.close();
 	return true;
 }

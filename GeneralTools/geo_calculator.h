@@ -35,8 +35,8 @@ public:
 	// output cosA and sinA
 	static void givensTransform(double x, double y, std::vector<double> &g);
 
-	//// CGAL dependent
-	//static void computeOBB(const std::vector<COpenMeshT::Point> & pts, std::vector<COpenMeshT::Point> & obb);
+	// CGAL dependent
+	static void computeOBB(const std::vector<COpenMeshT::Point> & pts, std::vector<double> & obb);
 	
 	// Bezier curve discretization
 	static void getBernsteinBasis(int n, double step, Eigen::MatrixXd & Bmat);
@@ -50,7 +50,7 @@ public:
 	// pt sorting alg; 
 	static void pts_sorting_alg(std::vector<COpenMeshT::Point> &pts);
 	static void simplify_polygon(std::vector<COpenMeshT::Point> &pts, double dT = 0.5);
-	static void reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts);
+	static void reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts, float tolOMT=1.0);
 	// spacing = a percentage of step size over total length
 	static void sample_polygon(std::vector<COpenMeshT::Point> &pts, double spacing, bool is_closed);
 };

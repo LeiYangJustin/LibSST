@@ -134,8 +134,10 @@ void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 		COpenMeshT::Point cemb(skeleton_.GetAccumArcLength()[sid], 0.0, 0.0);
 		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
 		COpenMeshT::Point tang_vec(rmf_list[sid](0, 0), rmf_list[sid](0, 1), rmf_list[sid](0, 2));
+		std::cout << "cs_extraction: " << sid << std::endl;
 		extracting_single_cross_section(skeleton_.GetSkeletalPts()[sid], tang_vec, cs_pts);
 		extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), emb_cs_pts, true);
+		// use decoding code to transform embedded cross-sections to original space for visualization
 		// init cs
 		CCrossSection cs;
 		cs.SetSid(sid);
@@ -177,7 +179,9 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 
 		if (d_from*d_to <= 0)
 		{
-			cnt++;
+			//cs_pts.push_back(p_from);
+			//cs_pts.push_back(p_to);
+			/*cnt++;*/
 			double d_deno = fabs(d_from) + fabs(d_to);
 			if (d_deno == 0 && 0 == fabs(d_to))
 			{
@@ -196,12 +200,13 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 	// sorting the vertices
 	//CGeoCalculator::reconstruct_curve_from_pointset(cs_pts);
 
-	CGeoCalculator::pts_sorting_alg(cs_pts);
-	CGeoCalculator::simplify_polygon(cs_pts);
-	if (has_global_deformation_)
-		CGeoCalculator::sample_polygon(cs_pts, 0.02, true);
-	else
-		CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
+	//CGeoCalculator::pts_sorting_alg(cs_pts);
+	//CGeoCalculator::simplify_polygon(cs_pts);
+	//if (has_global_deformation_)
+	//	CGeoCalculator::sample_polygon(cs_pts, 0.02, true);
+	//else
+	//	CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
+	//std::cout << cs_pts.size() << std::endl;
 }
 
 void CSstObject::decoding_vector_field(DenseMatrixXd & U, 

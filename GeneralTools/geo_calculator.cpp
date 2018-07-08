@@ -5,17 +5,20 @@
 #include <assert.h>
 
 #include "cgal_predef.h"
-//// CGAL 
-//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-//#include <CGAL/convex_hull_2.h>
-//// Compute OBB
-//#include <CGAL/Polygon_2.h>
-//#include <CGAL/min_quadrilateral_2.h>
 
+
+//// CGAL 
+// Compute OBB
+#include <CGAL/Polygon_2.h>
+#include <CGAL/min_quadrilateral_2.h>
+// convex hull
 #include <CGAL/convex_hull_2.h>
+// polyline simplification
 #include <CGAL/Polyline_simplification_2/simplify.h>
 #include <CGAL/Polyline_simplification_2/Squared_distance_cost.h>
+// curve reconstruction from unorganized point set
 #include <CGAL/Optimal_transportation_reconstruction_2.h>
+// random point generator
 #include <CGAL/point_generators_2.h>
 
 double CGeoCalculator::ComputeDistFromPoint2Plane(COpenMeshT::Point p, COpenMeshT::Point b, COpenMeshT::Point n)
@@ -313,27 +316,27 @@ void CGeoCalculator::givensTransform(double x, double y, std::vector<double>& g)
 	g.push_back(s);
 }
 
-//void CGeoCalculator::computeOBB(const std::vector<COpenMeshT::Point> & pts, std::vector<COpenMeshT::Point> & out_obb)
-//{
-//	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-//	typedef K::Point_2								Point_2;
-//	typedef CGAL::Polygon_2<K>						Polygon_2;
-//
-//	std::vector<Point_2> pointset;
-//	for (int i = 0; i < pts.size(); i++)
-//	{
-//		pointset.push_back(Point_2(pts[i][1], pts[i][2]));
-//	}
-//
-//	Polygon_2 ch, obb;
-//	CGAL::convex_hull_2(pointset.begin(), pointset.end(), std::back_inserter(ch));
-//	CGAL::min_rectangle_2(ch.vertices_begin(), ch.vertices_end(), std::back_inserter(obb));
-//	out_obb.clear();
-//	for (int i = 0; i < obb.size(); i++) {
-//		out_obb.push_back(COpenMeshT::Point(0.0, obb[i].x(), obb[i].y()));
-//		std::cout << out_obb.back() << std::endl;
-//	}
-//}
+void CGeoCalculator::computeOBB(const std::vector<COpenMeshT::Point> & pts, std::vector<double> & out_obb)
+{
+	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+	typedef K::Point_2								Point_2;
+	typedef CGAL::Polygon_2<K>						Polygon_2;
+
+	std::vector<Point_2> pointset;
+	for (int i = 0; i < pts.size(); i++)
+	{
+		pointset.push_back(Point_2(pts[i][1], pts[i][2]));
+	}
+
+	Polygon_2 ch, obb;
+	CGAL::convex_hull_2(pointset.begin(), pointset.end(), std::back_inserter(ch));
+	CGAL::min_rectangle_2(ch.vertices_begin(), ch.vertices_end(), std::back_inserter(obb));
+	out_obb.clear();
+	out_obb.push_back(obb.bbox().xmin());
+	out_obb.push_back(obb.bbox().xmax());
+	out_obb.push_back(obb.bbox().ymin());
+	out_obb.push_back(obb.bbox().xmax());
+}
 
 void CGeoCalculator::getBernsteinBasis(int n, double step, Eigen::MatrixXd & Bmat)
 {
@@ -447,11 +450,13 @@ void CGeoCalculator::pts_sorting_alg(std::vector<COpenMeshT::Point>& pts)
 
 	// output
 	pts.clear();
+	//std::cout << b_vertices.size() << std::endl;
 	for (int i = 0; i < b_vertices.size(); i++)
 	{
 		COpenMeshT::Point p = triMesh.point(b_vertices[i]);
 		p[0] = xCoord;
 		pts.push_back(p);
+		//std::cout << p[1] << " " << p[2] << std::endl;
 	}
 
 }
@@ -510,47 +515,80 @@ void CGeoCalculator::sample_polygon(std::vector<COpenMeshT::Point>& pts, double 
 	pts = samples;
 }
 
-//https://doc.cgal.org/latest/Optimal_transportation_reconstruction_2/index.html#Chapter_Optimal_Transportation_Curve_Reconstruction
-void CGeoCalculator::reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts)
+void CGeoCalculator::reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts, float tolOMT)
 {
-
 	typedef CGAL::Optimal_transportation_reconstruction_2<K>    Otr_2;
 	std::vector<KPoint2> points;
+	for (int i = 0; i < pts.size(); i++)
+		points.push_back(KPoint2(pts[i][1], pts[i][2]));
 
-	std::string filename = "fDataInput/test/blob00.xy";
-	std::ifstream ifs(filename.c_str());
-	KPoint2 point;
-	while (ifs >> point)
-		points.push_back(point);
-	ifs.close();
+	std::cout << "init pts: " << points.size() << std::endl;
+	if (points.size() == 0)
+		return;
 
-	std::cout << points.size() << std::endl;
-
+	std::vector<double> obb;
+	computeOBB(pts, obb);
+	double dl = (std::max)((obb[1] - obb[0]) / 2.,
+		(obb[3] - obb[2]) / 2.);
+	tolOMT = dl*tolOMT;
+	std::cout << "tolOMT: " << tolOMT << std::endl;
 	Otr_2 otr2(points);
-	otr2.set_use_flip(true);
-	otr2.run_under_wasserstein_tolerance(0.05);
-	
-
-	std::cout << "(-------------List output---------- )" << std::endl;
+	//otr2.set_random_sample_size(15);
+	//otr2.set_relevance(0.3);
 	std::vector<KPoint2> ptss;
 	std::vector<std::size_t> isolated_vertices;
 	std::vector<std::pair<std::size_t, std::size_t> > edges;
+	int cntIter = 0;
+	//float tolOMT = 0.6;
+	otr2.run_under_wasserstein_tolerance(tolOMT);
+	//std::cout << "(-------------List output---------- )" << tolOMT << " " << cntIter << std::endl;
+	//do {
+	//	otr2.run_under_wasserstein_tolerance(tolOMT);
+	//	tolOMT += 0.1;
+	//} while (otr2.number_of_isolated_vertices() > 0 || cntIter++ < 10);
+
 
 	otr2.indexed_output(
 		std::back_inserter(ptss),
 		std::back_inserter(isolated_vertices),
 		std::back_inserter(edges));
+	std::cout << "(-------------List output---------- )" << tolOMT << " " << cntIter << std::endl;
+	//// points
+	//std::vector<KPoint2>::iterator pit;
+	//for (pit = ptss.begin(); pit != ptss.end(); pit++)
+	//	std::cout << *pit << std::endl;
+	//// isolated vertices
+	//std::vector<std::size_t>::iterator vit;
+	//for (vit = isolated_vertices.begin(); vit != isolated_vertices.end(); vit++)
+	//	std::cout << "1 " << *vit << std::endl;
+	//// edges
+	//std::vector<std::pair<std::size_t, std::size_t> >::iterator eit;
+	//for (eit = edges.begin(); eit != edges.end(); eit++)
+	//	std::cout << "2 " << eit->first << " " << eit->second << std::endl;
 
-	// points
-	std::vector<KPoint2>::iterator pit;
-	for (pit = ptss.begin(); pit != ptss.end(); pit++)
-		std::cout << *pit << std::endl;
-	// isolated vertices
-	std::vector<std::size_t>::iterator vit;
-	for (vit = isolated_vertices.begin(); vit != isolated_vertices.end(); vit++)
-		std::cout << "1 " << *vit << std::endl;
-	// edges
-	std::vector<std::pair<std::size_t, std::size_t> >::iterator eit;
-	for (eit = edges.begin(); eit != edges.end(); eit++)
-		std::cout << "2 " << eit->first << " " << eit->second << std::endl;
+	/*std::cout << ptss.size() << ", " << isolated_vertices.size() << std::endl;
+	std::ofstream out_file("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\fDataRepo\\CSData\\dst_cs.xy");
+	if (out_file.is_open())
+	{
+		std::vector<KPoint2>::iterator pit;
+		for (pit = ptss.begin(); pit != ptss.end(); pit++)
+			out_file << "v " << *pit << std::endl;
+		std::vector<std::pair<std::size_t, std::size_t> >::iterator eit;
+		for (eit = edges.begin(); eit != edges.end(); eit++)
+			out_file << "e " << eit->first << " " << eit->second << std::endl;
+	}
+	out_file.close();
+
+	std::ofstream out_src_file("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\fDataRepo\\CSData\\src_cs.txt");
+	if (out_src_file.is_open())
+	{
+		std::vector<KPoint2>::iterator pit;
+		for (pit = points.begin(); pit != points.end(); pit++)
+			out_src_file << *pit << std::endl;
+	}
+	out_src_file.close();*/
+
+	// sorting the points and connect them if necessary
+	// cs8, cs10
+
 }

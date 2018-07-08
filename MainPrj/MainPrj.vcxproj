@@ -150,9 +150,12 @@
   <ItemGroup>
     <ClCompile Include="file_io.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="pugixml\pugixml.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="file_io.h" />
+    <ClInclude Include="pugixml\pugiconfig.hpp" />
+    <ClInclude Include="pugixml\pugixml.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

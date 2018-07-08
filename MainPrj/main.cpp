@@ -10,142 +10,230 @@
 #include "../GeneralTools/geo_calculator.h"
 #include "file_io.h"
 
-static std::string CONFIG_FILE{ "fDataInput/config_switch.txt" };   //输入文件名称
-static std::string DEF_CROSS_SECTIONS_FILE{ "fDataInput/def_cross_sections.txt" };   //输入文件名称
-
-// this is moved to file_io.h
-//enum SwitchType {sstExit, sstGlobal, sstLocal, sstPending};
-
-static SwitchType SWITCH(SwitchType::sstExit); // 全局开关
-
 int main(int argc ,char* argv)
 {
-	// setting the path
-	//sst_obj->SetParameters(
-	//	SRC_SKELETON_FILE,
-	//	DEF_SKELETON_FILE,
-	//	SRC_CROSS_SECTIONS_FILE,
-	//	DEF_CROSS_SECTIONS_FILE,
-	//	IN_MESH_FILE,
-	//	IN_EMB_MESH_FILE,
-	//	OUT_MESH_FILE,
-	//	OUT_EMB_MESH_FILE
-	//);
+	argv = "E:\\Research\\SSTsystem\\LibSST\\MainPrj\\Data\\SolveController_global_example.xml";
 
-	//////////////////////////////////////////////////////////////////////////
+	// init
+	CSstObject* sst_obj = new CSstObject;
 
-	// read mesh
-	CMeshObject * p_mesh_src_obj = new CMeshObject;
-	if (!CDataIO::ReadMesh("fDataInput/in_mesh_dense.stl", *p_mesh_src_obj))
-		return 0;
+	
 
-	// read skeleton
-	CCurveObject * p_skel_src_obj = new CCurveObject;
-	if (!CDataIO::ReadCurve("fDataInput/in_skeleton.txt", *p_skel_src_obj))
-		return 0;
-	//////////////////////////////////////////////////////////////////////////	
+	// parameters
+	// 1 - cs spacing
+	int cs_spacing = 5;
+	SwitchType solver_state(SwitchType::sstPending); 
 
-	CSkeleton skeleton(p_skel_src_obj->GetCurve());
-	CSstObject* sst_obj = new CSstObject(skeleton, p_mesh_src_obj->GetMesh());
-	// ENCODING
-	sst_obj->Encode();
+	//CSkeleton s;
+	//CFileIO::xml_read_skeleton("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\xml\\Skeleton.xml", s);
+	//CFileIO::xml_write_skeleton("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\xml\\defSkeleton.xml", s);
 
-	// SET SID_LIST
-	std::cout << "Sid list: " << "(# skeletal pts " << skeleton.GetAccumArcLength().size() << ")" << std::endl;
-	std::vector<int> sid_list;
-	int cnt = 5;
-	while (cnt < skeleton.GetAccumArcLength().size())
-	{
-		std::cout << cnt << " "; // std::endl;
-		sid_list.push_back(cnt);
-		cnt += 5;
-	}
-	std::cout << std::endl;
-	sst_obj->InitCrossSections(sid_list);
-	sst_obj->PrintSSTandMesh();
+	//CCrossSection cs;
+	//CFileIO::xml_read_a_section("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\xml\\Section.xml", 2, cs);
+	//CFileIO::xml_write_a_section("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\xml\\defSection.xml", 2, cs);
+
+
+	//////////////////////////////////////////////////////////
+	//std::vector<COpenMeshT::Point> pts;
+	//std::string fname = "E:\\Research\\SSTsystem\\LibSST\\MainPrj\\fDataRepo\\CSData\\src_cross_sections18.txt";
+	//CFileIO::read_cross_section_pts(fname, pts);
+	//CGeoCalculator::reconstruct_curve_from_pointset(pts, 0.05);
+	//////////////////////////////////////////////////////////
+
+	//////////////////////////////////////////////////////////
+	//// read mesh
+	//CMeshObject * p_mesh_src_obj = new CMeshObject;
+	//if (!CDataIO::ReadMesh("Data/Sframe.stl", *p_mesh_src_obj)) {
+	//	std::cerr << "Path to the mesh model cannot be found!\n";
+	//	return 0;
+	//}
+	//CCurveObject * p_skel_src_obj = new CCurveObject;
+	//if (!CDataIO::ReadCurve("Data/in_skeleton.txt", *p_skel_src_obj)) {
+	//	std::cerr << "Path to the input skeleton cannot be found!\n";
+	//	return 0;
+	//}
+	//// Initialization SST
+	//CSkeleton skeleton(p_skel_src_obj->GetCurve());
+	//sst_obj->SetSkeleton(skeleton);
+	//sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
+	//sst_obj->Encode();
+	//// Get cross-sections
+	//std::vector<int> sid_list;
+	//int cnt = 5;
+	//while (cnt < skeleton.GetAccumArcLength().size()) {
+	//	sid_list.push_back(cnt);
+	//	cnt += cs_spacing;
+	//}
+	//sst_obj->InitCrossSections(sid_list);
+
+
+	//// Output
+	////sst_obj->PrintSSTandMesh();
+	//CFileIO::print_SST(sst_obj);
+	//////////////////////////////////////////////////////////
+
+	//return 0;
 
 	// LOOP TO CATCH ANY CALL
 	int cntIter = 0, maxIter = 10000;
-	while (++cntIter < 3)
+	while (++cntIter < 4)
 	{
 		std::cout << cntIter << std::endl;
 
 		// step 1: read the config file and update the two global switchs
-		SWITCH = CFileIO::read_config_file(CONFIG_FILE);
+		CFileIO::InputPaths in_paths;
+		solver_state = CFileIO::xml_read_config_file(argv, in_paths);
 
 		// exit when all switches are off
-		if (SWITCH == SwitchType::sstExit)
+		switch (solver_state)
+		{
+		case SwitchType::sstExit: 
 		{
 			std::cerr << "EXIT" << std::endl;
 			return 1;
 		}
-		// GO ON GLOBAL, USING THE PRE-FACTORIZATION
-		else if (SWITCH == SwitchType::sstPending) {
-			// pending
-			std::cout << "Pending for 10 seconds...";
-			//std::this_thread::sleep_for(std::chrono::seconds(10));
-
-			std::cout << "testing..." << std::endl;
-			std::vector<COpenMeshT::Point> pts;
-			CGeoCalculator::reconstruct_curve_from_pointset(pts);
-		}
-		else if (SWITCH == SwitchType::sstGlobal)
+		case SwitchType::sstUpdate:
 		{
-			//
-			sst_obj->ResetCrossSectionsAfterDeformation();
+			std::cout << "Update is under construction" << std::endl;
+			//std::cout << "SST has been updated" << std::endl;
 
-			std::cout << "Continue the Global deformation..." << std::endl;
+			// in this part, we shall allow users to do any modification to the selected cross-sections.
+
+			//// get sids
+			//std::vector<int> sid_list;
+			//sst_obj->InsertCrossSections(sid_list);
+			sst_obj->Update();
+			break;
+		}
+		case SwitchType::sstInit:
+		{
+			// read mesh
+			CMeshObject * p_mesh_src_obj = new CMeshObject;
+			if (!CDataIO::ReadMesh(in_paths.path_to_mesh_in, *p_mesh_src_obj)) {
+				std::cerr << "Path to the mesh model cannot be found!\n";
+				return 0;
+			}
+
+			// read skeleton
+			CSkeleton skeleton;
+			if (!CFileIO::xml_read_skeleton(in_paths.path_to_src, skeleton)) {
+				std::cerr << "Path to the input skeleton cannot be found!\n";
+				return 0;
+			}
+
+			// Initialization SST
+			sst_obj->SetSkeleton(skeleton);
+			sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
+			sst_obj->Encode();
+
+			// Get cross-sections
+			std::vector<int> sid_list;
+			int cnt = 5;
+			while (cnt < skeleton.GetAccumArcLength().size()) {
+				sid_list.push_back(cnt);
+				cnt += cs_spacing;
+			}
+			sst_obj->InitCrossSections(sid_list);
+
+			// output
+			sst_obj->PrintSSTandMesh();
+
+			break;
+		}
+		case SwitchType::sstGlobal:
+		{
+			std::cout << "Global deformation..." << std::endl;
+			
+			// reset cross-sections
+			sst_obj->ResetCrossSectionsAfterDeformation();
+			
+			// input
 			CSkeleton def_skeleton;
-			CFileIO::read_skeleton("fDataRepo/def_skeleton.txt", def_skeleton);
+			if (!CFileIO::xml_read_skeleton(in_paths.path_to_dst, def_skeleton))
+			{
+				return 0;
+			}
+			//CFileIO::read_skeleton("fDataRepo/def_skeleton.txt", def_skeleton);
 			sst_obj->SetDefSkeleton(def_skeleton);
+
+			// deform
 			sst_obj->GlobalDeformSetup();
 			sst_obj->GlobalDeformSolve();
-			//
-			std::cout << "Global deformation done" << std::endl;
 			bool is_deformed = true;
-			sst_obj->PrintMesh("fDataRepo/dst_gmesh.txt", "fDataRepo/dst_emb_gmesh.txt", is_deformed);
+			//sst_obj->PrintMesh("fDataRepo/dst_gmesh.txt", "fDataRepo/dst_emb_gmesh.txt", is_deformed);
+			////sst_obj->Update(); 
+			////
+			std::cout << "Global deformation done" << std::endl;
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+			break;
 		}
-		// GO ON LOCAL, USING THE PRE-FACTORIZATION
-		else if (SWITCH == SwitchType::sstLocal)
+		case SwitchType::sstLocal:
 		{
-			//
+			std::cout << "Local deformation..." << std::endl;
+
+			// get path
+
+			// reset cross-sections
 			sst_obj->ResetCrossSectionsAfterDeformation();
 
-			std::cout << "Continue the Local deformation..." << std::endl;
-			std::vector<int> def_csid_list;
-			CFileIO::read_local_def_cs_id_from_config_file(CONFIG_FILE, def_csid_list);
-			std::string fname_dst = "fDataRepo/CSdata/dst_cross_sections";
-			std::string fname_src = "fDataRepo/CSdata/src_cross_sections";
+			// read def cs
 
-			// set up
-			sst_obj->SetDefCSList(def_csid_list);
-			for (int i = 0; i < def_csid_list.size(); i++)
-			{
-				std::ostringstream id_str;
-				id_str << def_csid_list[i];
-				// get src_cs
-				std::string fname_cs_src = fname_src;
-				fname_cs_src.append(id_str.str());
-				fname_cs_src.append(".txt");
-				std::vector<COpenMeshT::Point> src_cs_pts;
-				CFileIO::read_cross_section_pts(fname_cs_src, src_cs_pts);
-				// get dst_cs
-				std::string fname_cs_dst = fname_dst;
-				fname_cs_dst.append(id_str.str());
-				fname_cs_dst.append(".txt");
-				std::vector<COpenMeshT::Point> dst_cs_pts;
-				CFileIO::read_cross_section_pts(fname_cs_dst, dst_cs_pts);
-				if (!sst_obj->RenewCSInfo(def_csid_list[i], src_cs_pts, dst_cs_pts)) {
-					std::cerr << "please make sure CS" << def_csid_list[i] << "'s info is correct" << std::endl;
-				}
-			}
+			// read src cs
+
+			// get def_csid_list
+
+			std::vector<int> def_csid_list;
+			//CFileIO::read_local_def_cs_id_from_config_file(CONFIG_FILE, def_csid_list);
+			//std::string fname_dst = "fDataRepo/CSdata/dst_cross_sections";
+			//std::string fname_src = "fDataRepo/CSdata/src_cross_sections";
+
+			//// set up
+			//sst_obj->SetDefCSList(def_csid_list);
+			//for (int i = 0; i < def_csid_list.size(); i++)
+			//{
+			//	std::ostringstream id_str;
+			//	id_str << def_csid_list[i];
+			//	// get src_cs
+			//	std::string fname_cs_src = fname_src;
+			//	fname_cs_src.append(id_str.str());
+			//	fname_cs_src.append(".txt");
+			//	std::vector<COpenMeshT::Point> src_cs_pts;
+			//	CFileIO::read_cross_section_pts(fname_cs_src, src_cs_pts);
+			//	// get dst_cs
+			//	std::string fname_cs_dst = fname_dst;
+			//	fname_cs_dst.append(id_str.str());
+			//	fname_cs_dst.append(".txt");
+			//	std::vector<COpenMeshT::Point> dst_cs_pts;
+			//	CFileIO::read_cross_section_pts(fname_cs_dst, dst_cs_pts);
+			//	if (!sst_obj->RenewCSInfo(def_csid_list[i], src_cs_pts, dst_cs_pts)) {
+			//		std::cerr << "please make sure CS" << def_csid_list[i] << "'s info is correct" << std::endl;
+			//	}
+			//}
+
+			// deform
 			sst_obj->LocalDeformSetup();
 			sst_obj->LocalDeformSolve();
-			//
 			bool is_deformed = true;
 			sst_obj->PrintMesh("fDataRepo/dst_lmesh.txt", "fDataRepo/dst_emb_lmesh.txt", is_deformed);
+
+			// 
 			std::cout << "Local deformation done" << std::endl;
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+			break;
 		}
+		case SwitchType::sstPending:
+		{
+			std::cout << "Pending for 10 seconds..." << std::endl;
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+			break;
+		}
+		default : {
+			std::cout << "Pending for 10 seconds..." << std::endl;
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+			break;
+		}
+
+		} // end switch
 	}
 
 	return 1;

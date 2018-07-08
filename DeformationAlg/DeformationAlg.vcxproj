@@ -101,7 +101,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;CGAL_EIGEN3_ENABLED;USE_FORWARD_DECL;_USE_MATH_DEFINES;INCLUDE_TEMPLATES;CGAL_USE_MPFR;CGAL_USE_GMP;DEF_ALGCOLLE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(EIGEN_ROOT);$(LIBIGL_INCLUDEDIR);$(LIBIGL_DIR);$(BOOST_INCLUDEDIR);$(CGAL)\include;$(CGAL)\auxiliary\gmp\include;$(CGAL)\winbuild\include;$(OPENCV_DIR)\include;$(OPENMESH)\include;$(LIBIGL_DIR)\external\embree\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(EIGEN_ROOT);$(BOOST_INCLUDEDIR);$(OPENCV_DIR)\include;$(OPENMESH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
