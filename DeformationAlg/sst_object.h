@@ -16,14 +16,12 @@ public:
 	{ 
 		skeleton_ = s; trimesh_ = in_mesh;
 		deformer_ = new CSSTDeformer;
-		set_parameters();
 	};
 	CSstObject() :
 		has_global_deformation_(false), has_local_deformation_(false),
 		is_encoded_(false), is_deformed_(false)
 	{
 		deformer_ = new CSSTDeformer;
-		set_parameters();
 	};
 	~CSstObject() 
 	{ 
@@ -78,9 +76,9 @@ public:
 	};
 	void GetCrossSections(std::vector<CCrossSection> &cs_list)
 	{
-		for (int i = 0; i < cross_sections_.size(); i++)
+		for (auto map_iter = map_id_cross_sections_.begin(); map_iter != map_id_cross_sections_.end(); ++map_iter)
 		{
-			CCrossSection cs(cross_sections_[i]);
+			CCrossSection cs(map_iter->second);
 			cs_list.push_back(cs);
 		}
 	}
@@ -121,16 +119,16 @@ public:
 		return def_skeleton_;
 	};
 
-	void SetDefCSList(std::vector<int> def_csid_list) {
+	void SetDefCSList(std::vector<int> def_sid_list) {
 		has_local_deformation_ = true;
 		has_global_deformation_ = !has_local_deformation_;
-		def_csid_list_ = def_csid_list;
+		def_sid_list_ = def_sid_list;
 	};
-	bool RenewCSInfo(int csid, std::vector<COpenMeshT::Point> cs_pts, std::vector<COpenMeshT::Point> def_cs_pts)
+	bool RenewCSInfo(int sid, std::vector<COpenMeshT::Point> cs_pts, std::vector<COpenMeshT::Point> def_cs_pts)
 	{
-		cross_sections_[csid].SetDeformed(true);
-		cross_sections_[csid].SetEmbProfPts(cs_pts);
-		cross_sections_[csid].SetDefEmbProfPts(def_cs_pts);
+		map_id_cross_sections_[sid].SetDeformed(true);
+		map_id_cross_sections_[sid].SetEmbProfPts(cs_pts);
+		map_id_cross_sections_[sid].SetDefEmbProfPts(def_cs_pts);
 		if (def_cs_pts.size() == cs_pts.size())
 			return true;
 		else
@@ -140,26 +138,11 @@ public:
 	// deformation call
 	void LocalDeformSetup(/*std::vector<std::pair<int, int>> cs_pair_list*/);
 	void GlobalDeformSetup(bool use_local_setup = false);
+	bool LocalDeformSolve();
+	bool GlobalDeformSolve();
 
-	void LocalDeformSolve();
-	void GlobalDeformSolve();
-
-	//void SetParameters(std::string fname_src_skeleton,
-	//	std::string fname_dst_skeleton,
-	//	std::string fname_src_cross_sections,
-	//	std::string fname_dst_cross_sections,
-	//	std::string fname_src_mesh,
-	//	std::string fname_src_emb_mesh,
-	//	std::string fname_dst_mesh,
-	//	std::string fname_dst_emb_mesh);
-
-	// print
-	bool PrintSSTandMesh();
-	bool PrintMesh(std::string fname_original, std::string fname_embedded, bool is_deformed = false);
-	bool PrintMesh(std::string fname, const COpenMeshT &m, bool is_emb = false);
-	bool PrintSkeleton(std::string fname, const CSkeleton &s);
-	bool PrintCrossSectionList(std::string fname, const std::vector<CCrossSection> &cs_list, bool is_emb = false);
 	void ResetCrossSectionsAfterDeformation();
+
 private:
 	// deformer
 	CSSTDeformer* deformer_;
@@ -167,8 +150,8 @@ private:
 	CSkeleton skeleton_;
 	CSkeleton def_skeleton_;
 	//
-	std::vector<CCrossSection> cross_sections_;
-	std::vector<int> def_csid_list_;
+	std::vector<int> def_sid_list_;
+	std::map<int, CCrossSection> map_id_cross_sections_;
 	//std::vector<CCrossSection> def_cross_sections_;
 	//
 	COpenMeshT trimesh_;
@@ -179,18 +162,6 @@ private:
 	bool is_updated_;
 	bool has_global_deformation_;
 	bool has_local_deformation_;
-
-	// path
-	std::string fname_src_skeleton_;
-	std::string fname_dst_skeleton_;
-	std::string fname_src_cross_sections_;
-	std::string fname_dst_cross_sections_;
-	std::string fname_src_emb_cross_sections_;
-	std::string fname_dst_emb_cross_sections_;
-	std::string fname_src_mesh_;
-	std::string fname_dst_mesh_;
-	std::string fname_src_emb_mesh_;
-	std::string fname_dst_emb_mesh_;
 
 private:
 	// functions
@@ -204,8 +175,5 @@ private:
 		const DenseMatrixXd & V, const std::vector<int> ids);
 	void decoding_mesh();
 	void skeleton_driven_cross_section_transformation();
-
-	void set_parameters();
-
 };
 #endif

@@ -25,15 +25,14 @@ public:
 	// local setup and solve
 	void LocalDeformationSetUp(
 		const std::vector<CCrossSection> def_cs_list);
-
-	void LocalDeformationSolve(
+	bool LocalDeformationSolve(
 		const std::vector<CCrossSection> def_cs_list,
 		COpenMeshT *mesh,
 		COpenMeshT *def_mesh);
 
 	// global setup and solve
 	void GlobalDeformationSetup(std::vector<CCrossSection> def_cs_list);
-	void GlobalDeformationSolve(
+	bool GlobalDeformationSolve(
 		const std::vector<CCrossSection> def_cs_list,
 		COpenMeshT *mesh,
 		COpenMeshT *def_mesh);

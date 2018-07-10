@@ -2,6 +2,7 @@
 #include "file_io.h"
 #include "pugixml\pugixml.hpp"
 #include "pugixml\pugiconfig.hpp"
+#include "ini_parser\ini.hpp"
 
 SwitchType CFileIO::read_config_file(std::string fname)
 {
@@ -144,7 +145,7 @@ bool CFileIO::xml_write_skeleton(std::string fname, const CSkeleton & s)
 		int cnt = 0;
 		for (pugi::xml_attribute attr = vertex.first_attribute();
 			attr; attr = attr.next_attribute(), cnt++) {
-			attr.set_value(skelPts[i][cnt]);
+			attr.set_value(float(skelPts[i][cnt]));
 		}
 		vertex.prepend_attribute("ID");
 		pugi::xml_attribute attr = vertex.first_attribute();
@@ -165,7 +166,7 @@ bool CFileIO::xml_write_skeleton(std::string fname, const CSkeleton & s)
 	return true;
 }
 
-bool CFileIO::xml_read_a_section(std::string fname, const int csid, CCrossSection & cs)
+bool CFileIO::xml_read_a_section(std::string fname, const int sid, CCrossSection & cs)
 {
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(fname.c_str());
@@ -175,29 +176,24 @@ bool CFileIO::xml_read_a_section(std::string fname, const int csid, CCrossSectio
 	}
 
 	std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
-	int root_id;
-
 	pugi::xml_node cs_node = doc.child("DUT_AutoMorpher").child("Section");	
 	for (cs_node; cs_node; cs_node = cs_node.next_sibling())
 	{
-		std::cout << cs_node.attribute("ID").value() << std::endl;
-		double tmp_csid;
-		std::istringstream ss(cs_node.attribute("ID").value());
-		ss >> tmp_csid;
-		if (tmp_csid == csid) {
-			std::istringstream ss(cs_node.attribute("RootId").value());
-			ss >> root_id;
-			//std::cout << node.attribute("ID").value() << "   Y" << std::endl;
+		std::string spid_value = cs_node.attribute("SPID").value();
+		int tmp_sid = atoi(spid_value.c_str());
+		std::string id_value = cs_node.attribute("ID").value();
+		int tmp_csid = atoi(id_value.c_str());
+		if (sid == tmp_sid) {
+			std::cout << "ID" << tmp_csid << ", SPID " << tmp_sid << std::endl;
 			pugi::xml_node pt_node = cs_node.first_child();
 			for (; pt_node; pt_node = pt_node.next_sibling())
 			{
-				int cnt = 3; COpenMeshT::Point pt(0, 0, 0); double a;
+				int cnt = 3; COpenMeshT::Point pt(0, 0, 0); 
 				for (pugi::xml_attribute attr = pt_node.last_attribute();
 					attr; attr = attr.previous_attribute()) {
 					if (cnt--) {
-						std::istringstream ss(attr.value());
-						ss >> a;
-						pt[cnt] = a;
+						std::string ss = attr.value();
+						pt[cnt] = atof(ss.c_str());
 					}
 				}
 				if (strcmp(pt_node.name(), "Point") == 0)
@@ -205,63 +201,121 @@ bool CFileIO::xml_read_a_section(std::string fname, const int csid, CCrossSectio
 				else if (strcmp(pt_node.name(), "EmbPoint") == 0)
 					emb_cs_pts.push_back(pt);
 			}
-			cs.SetSid(root_id);
+			cs.SetSid(tmp_sid);
 			cs.SetEmbProfPts(emb_cs_pts);
 			cs.SetProfPts(cs_pts);
 			if (strcmp(cs_node.attribute("IsClosed").value(), "T") == 0)
 				cs.SetClosed();
-
 			break;
 		}
 	}
 	return true;
 }
+//
+//bool CFileIO::xml_write_a_section(std::string fname, const int csid, const CCrossSection &cs)
+//{
+//	std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
+//	int root_id;
+//
+//	cs_pts = cs.GetProfPts();
+//	emb_cs_pts = cs.GetEmbProfPts();
+//	root_id = cs.GetSid();
+//
+//	pugi::xml_document dst_doc;
+//	pugi::xml_node decl = dst_doc.prepend_child(pugi::node_declaration);
+//	
+//	// heading
+//	decl.append_attribute("version") = "1.0";
+//	decl.append_attribute("encoding") = "UTF-8";
+//
+//	// 
+//	dst_doc.append_child("DUT_AutoMorpher");
+//	pugi::xml_node dst_ss = dst_doc.child("DUT_AutoMorpher");
+//	// 
+//	pugi::xml_node tmp_cs = dst_ss.append_child("Section");
+//	tmp_cs.append_attribute("ID").set_value(csid);
+//	tmp_cs.append_attribute("SPID").set_value(root_id);
+//	if (cs.IsClosed())
+//		tmp_cs.append_attribute("IsClosed").set_value("T");
+//	else
+//		tmp_cs.append_attribute("IsClosed").set_value("F");
+//	// add points
+//	for (int i = 0; i < cs_pts.size(); i++) {
+//		pugi::xml_node vertex = dst_ss.child("Section").append_child("Point");
+//		vertex.append_attribute("X").set_value(float(cs_pts[i][0]));
+//		vertex.append_attribute("Y").set_value(float(cs_pts[i][1]));
+//		vertex.append_attribute("Z").set_value(float(cs_pts[i][2]));
+//		vertex.prepend_attribute("ID").set_value(i);
+//
+//		//// check
+//		//for (pugi::xml_attribute attr = vertex.first_attribute();
+//		//	attr; attr = attr.next_attribute()) {
+//		//	std::cout << attr.name() << " " << attr.value() << ", ";
+//		//}
+//		//std::cout << std::endl;
+//	}
+//	std::cout << "Saving a Cross-section: " << dst_doc.save_file(fname.c_str()) << std::endl;
+//
+//	return true;
+//}
 
-bool CFileIO::xml_write_a_section(std::string fname, const int csid, const CCrossSection &cs)
+bool CFileIO::xml_read_sections(std::string fname, std::vector<CCrossSection>& cs_list)
 {
-	std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
-	int root_id;
+	cs_list.clear();
 
-	cs_pts = cs.GetProfPts();
-	emb_cs_pts = cs.GetEmbProfPts();
-	root_id = cs.GetSid();
-
-	pugi::xml_document dst_doc;
-	pugi::xml_node decl = dst_doc.prepend_child(pugi::node_declaration);
-	
-	// heading
-	decl.append_attribute("version") = "1.0";
-	decl.append_attribute("encoding") = "UTF-8";
-
-	// 
-	dst_doc.append_child("DUT_AutoMorpher");
-	pugi::xml_node dst_ss = dst_doc.child("DUT_AutoMorpher");
-	// 
-	dst_ss.append_child("Section");
-	dst_ss.child("Section").append_attribute("ID").set_value(csid);
-	dst_ss.child("Section").append_attribute("SPID").set_value(root_id);
-	if (cs.IsClosed())
-		dst_ss.child("Section").append_attribute("IsClosed").set_value("T");
-	// add points
-	for (int i = 0; i < cs_pts.size(); i++) {
-		pugi::xml_node vertex = dst_ss.child("Section").append_child("Point");
-		vertex.append_attribute("X").set_value(cs_pts[i][0]);
-		vertex.append_attribute("Y").set_value(cs_pts[i][1]);
-		vertex.append_attribute("Z").set_value(cs_pts[i][2]);
-		vertex.prepend_attribute("ID").set_value(i);
-
-		// check
-		for (pugi::xml_attribute attr = vertex.first_attribute();
-			attr; attr = attr.next_attribute()) {
-			std::cout << attr.name() << " " << attr.value() << ", ";
-		}
-		std::cout << std::endl;
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(fname.c_str());
+	if (!result) {
+		std::cerr << "Error at CFileIO::xml_read_skeleton()" << std::endl;
+		return false;
 	}
 
-	// save document to file
-	//char* destinate = "E:\\Research\\SSTsystem\\LibSST\\MainPrj\\xml\\defSkeleton.xml";
-	std::cout << "Saving result: " << dst_doc.save_file(fname.c_str()) << std::endl;
+	pugi::xml_node cs_node = doc.child("DUT_AutoMorpher").child("Section");
+	for (cs_node; cs_node; cs_node = cs_node.next_sibling())
+	{
+		//
+		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
+		int csid, spid;
+		bool is_closed;
+		//
+		std::string str_id_value = cs_node.attribute("ID").value();
+		csid = atoi(str_id_value.c_str());
+		std::string str_rid_value = cs_node.attribute("SPID").value();
+		spid = atoi(str_rid_value.c_str());
+		if (strcmp(cs_node.attribute("IsClosed").value(),"T") == 0)
+			is_closed = true;
+		else 
+			is_closed = false;
 
+		std::cout << "ID: " << csid << ", SPID: " << spid << ", IsClosed: " << is_closed << std::endl;
+
+		//std::cout << node.attribute("ID").value() << "   Y" << std::endl;
+		pugi::xml_node pt_node = cs_node.first_child();
+		for (; pt_node; pt_node = pt_node.next_sibling())
+		{
+			int cnt = 3; COpenMeshT::Point pt(0, 0, 0);
+			for (pugi::xml_attribute attr = pt_node.last_attribute();
+				attr; attr = attr.previous_attribute()) {
+				if (cnt--) {
+					std::string  ss = attr.value();
+					pt[cnt] = atof(ss.c_str());
+				}
+			}
+			if (strcmp(pt_node.name(), "Point") == 0)
+				cs_pts.push_back(pt);
+			else if (strcmp(pt_node.name(), "EmbPoint") == 0)
+				emb_cs_pts.push_back(pt);
+		}
+
+		//
+		CCrossSection cs;
+		cs.SetSid(spid);
+		cs.SetEmbProfPts(emb_cs_pts);
+		cs.SetProfPts(cs_pts);
+		if (is_closed) cs.SetClosed();
+		// 
+		cs_list.push_back(cs);
+	}
 	return true;
 }
 
@@ -282,37 +336,36 @@ bool CFileIO::xml_write_sections(std::string fname, const std::vector<CCrossSect
 	std::vector<CCrossSection>::const_iterator cs_iter = cs_list.begin();
 	for (; cs_iter != cs_list.end(); ++cs_iter, ++csid) {
 		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
-		int root_id;
 		cs_pts = cs_iter->GetProfPts();
 		emb_cs_pts = cs_iter->GetEmbProfPts();
-		root_id = cs_iter->GetSid();
+		int sid = cs_iter->GetSid();
 
 		// cross section node and their attributes
-		dst_ss.append_child("Section");
-		dst_ss.child("Section").append_attribute("ID").set_value(csid);
-		dst_ss.child("Section").append_attribute("SPID").set_value(root_id);
+		pugi::xml_node tmp_cs = dst_ss.append_child("Section");
+		tmp_cs.append_attribute("ID").set_value(csid);
+		tmp_cs.append_attribute("SPID").set_value(sid);
 		if (cs_iter->IsClosed())
-			dst_ss.child("Section").append_attribute("IsClosed").set_value("T");
+			tmp_cs.append_attribute("IsClosed").set_value("T");
+		else
+			tmp_cs.append_attribute("IsClosed").set_value("F");
 
 		// add point nodes and their attributes
 		for (int i = 0; i < cs_pts.size(); i++) {
-			pugi::xml_node vertex = dst_ss.child("Section").append_child("Point");
-			vertex.append_attribute("X").set_value(cs_pts[i][0]);
-			vertex.append_attribute("Y").set_value(cs_pts[i][1]);
-			vertex.append_attribute("Z").set_value(cs_pts[i][2]);
+			pugi::xml_node vertex = tmp_cs.append_child("Point");
+			vertex.append_attribute("X").set_value(float(cs_pts[i][0]));
+			vertex.append_attribute("Y").set_value(float(cs_pts[i][1]));
+			vertex.append_attribute("Z").set_value(float(cs_pts[i][2]));
 			vertex.prepend_attribute("ID").set_value(i);
-
-			//// check
-			//for (pugi::xml_attribute attr = vertex.first_attribute();
-			//	attr; attr = attr.next_attribute()) {
-			//	std::cout << attr.name() << " " << attr.value() << ", ";
-			//}
-			//std::cout << std::endl;
+		}
+		for (int i = 0; i < emb_cs_pts.size(); i++) {
+			pugi::xml_node vertex = tmp_cs.append_child("EmbPoint");
+			vertex.append_attribute("X").set_value(float(emb_cs_pts[i][0]));
+			vertex.append_attribute("Y").set_value(float(emb_cs_pts[i][1]));
+			vertex.append_attribute("Z").set_value(float(emb_cs_pts[i][2]));
+			vertex.prepend_attribute("ID").set_value(i);
 		}
 	}
-	// save document to file
-	//char* destinate = "E:\\Research\\SSTsystem\\LibSST\\MainPrj\\xml\\defSkeleton.xml";
-	std::cout << "Saving result: " << dst_doc.save_file(fname.c_str()) << std::endl;
+	std::cout << "Saving Cross-sections: " << dst_doc.save_file(fname.c_str()) << std::endl;
 
 	return true;
 }
@@ -392,7 +445,7 @@ bool CFileIO::write_mesh(std::string fname, COpenMeshT & m, bool is_emb)
 //	return false;
 //}
 
-SwitchType CFileIO::xml_read_config_file(const std::string fname, CFileIO::InputPaths in_paths)
+SwitchType CFileIO::xml_read_config_file(const std::string fname, CFileIO::InputPaths &in_paths)
 {
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(fname.c_str());
@@ -480,23 +533,92 @@ SwitchType CFileIO::xml_read_config_file(const std::string fname, CFileIO::Input
 
 		return SwitchType::sstLocal;
 	}
+	else
+	{
+		return SwitchType::sstExit;
+	}
 }
 
-bool CFileIO::print_SST(CSstObject* sst)
+SwitchType CFileIO::ini_read_config_file(const std::string fname, CFileIO::InputPaths & in_paths)
+{
+	INI::Parser ini_parser(fname.c_str());
+	INI::Level topLevel = ini_parser.top();
+
+	if (topLevel("Exit").depth)
+	{
+		return SwitchType::sstExit;
+	}
+	else if (topLevel("Init").depth)
+	{
+		std::cout << topLevel("Init")["State"] << std::endl;
+
+		in_paths.path_to_config_in = fname;
+		in_paths.path_to_mesh_in = topLevel("Init")["Mesh"];
+		//in_paths.path_to_outfolder = topLevel("Init")["OutputFolder"];
+		in_paths.path_to_src = topLevel("Init")["SrcPath"];
+		
+		return SwitchType::sstInit;
+	}
+	else if (topLevel("Global").depth)
+	{
+		std::cout << topLevel("Global")["State"] << std::endl;
+
+		in_paths.path_to_config_in = fname;
+		in_paths.path_to_mesh_in = topLevel("Global")["Mesh"];
+		//in_paths.path_to_outfolder = topLevel("Global")["OutputFolder"];
+		in_paths.path_to_src = topLevel("Global")["SrcPath"];
+		in_paths.path_to_dst = topLevel("Global")["DstPath"];
+
+		return SwitchType::sstGlobal;
+	}
+	else if (topLevel("Local").depth)
+	{
+		std::cout << topLevel("Local")["State"] << std::endl;
+
+		in_paths.path_to_config_in = fname;
+		in_paths.path_to_mesh_in = topLevel("Local")["Mesh"];
+		//in_paths.path_to_outfolder = topLevel("Local")["OutputFolder"];
+		in_paths.path_to_src = topLevel("Local")["SrcPath"];
+		in_paths.path_to_dst = topLevel("Local")["DstPath"];
+
+		return SwitchType::sstLocal;
+	}
+	else{
+		std::cout << "pending" << std::endl;
+		return SwitchType::sstPending;
+	}
+}
+
+bool CFileIO::ini_write_config_file(const std::string fname)
+{
+	std::ofstream out_file(fname);
+
+	if (out_file.is_open()) {
+		out_file << "[Pending]\n";
+		out_file << "State = Pending\n";
+		out_file.close();
+		return true;
+	}
+
+	return false;
+}
+
+bool CFileIO::print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
 {
 	// get path
-	std::string fname_src_skeleton_ = "Data/src_skeleton.xml";
-	std::string fname_dst_skeleton_ = "Data/dst_skeleton.xml";
-	std::string fname_src_cross_sections_ = "Data/src_cross_sections.xml";
-	std::string fname_dst_cross_sections_ = "Data/dst_cross_sections.xml";
-	std::string fname_src_mesh_ = "Data/src_mesh.txt";
-	std::string fname_dst_mesh_ = "Data/dst_mesh.txt";
-	std::string fname_src_emb_mesh_ = "Data/src_emb_mesh.txt";
-	std::string fname_dst_emb_mesh_ = "Data/dst_emb_mesh.txt";
+	std::string fname_src_skeleton_ = out_paths.path_to_src_skel;
+	std::string fname_dst_skeleton_ = out_paths.path_to_def_skel;
+	std::string fname_src_cross_sections_ = out_paths.path_to_src_cs;
+	std::string fname_dst_cross_sections_ = out_paths.path_to_def_skel;
+	std::string fname_src_mesh_ = out_paths.path_to_mesh_in;
+	std::string fname_dst_mesh_ = out_paths.path_to_mesh_out;
+	std::string fname_src_emb_mesh_ = out_paths.path_to_mesh_emb;
 
 	CSkeleton s = sst->GetSkeleton();
 	std::vector<CCrossSection> cs_list;
+	sst->GetCrossSections(cs_list);
 	COpenMeshT m = sst->GetMesh();
+	
 
 	// print src
 	if (!CFileIO::xml_write_skeleton(fname_src_skeleton_, s))
@@ -527,36 +649,48 @@ bool CFileIO::print_SST(CSstObject* sst)
 			return false;
 		if (!write_mesh(fname_dst_mesh_, dm, false))
 			return false;
-		if (!write_mesh(fname_dst_emb_mesh_, dm, true) && sst->IsEncode())
-			return false;
+		//if (!write_mesh(fname_dst_emb_mesh_, dm, true) && sst->IsEncode())
+		//	return false;
 	}
 
 	return true;
 }
-void CFileIO::set_output_path(std::string folder_path, CFileIO::OutputPaths o_paths)
+void CFileIO::set_output_path(std::string path, CFileIO::OutputPaths &output_paths)
 {
 	// set paths
-	o_paths.path_to_folder = folder_path;
 
-	o_paths.path_to_mesh_in = folder_path;
-	o_paths.path_to_mesh_in.append("\\InMesh.stl");
+	//std::string folder_path;
+	std::string folder_path;
+	size_t a = path.find_last_of("\\");
+
+	for (int i = 0; i < a; i++) {
+		//std::cout << path[i];
+		folder_path.push_back(path[i]);
+	}
+	//std::cout  << std::endl;
+	folder_path.append("\\OutputData");
+
+	output_paths.path_to_folder = folder_path;
 	
-	o_paths.path_to_mesh_emb = folder_path;
-	o_paths.path_to_mesh_emb.append("\\Emb_Mesh.txt");
+	output_paths.path_to_mesh_in = folder_path;
+	output_paths.path_to_mesh_in.append("\\Src_Mesh.txt");
 	
-	o_paths.path_to_mesh_out = folder_path;
-	o_paths.path_to_mesh_out.append("\\Gen_Mesh.txt");
+	output_paths.path_to_mesh_emb = folder_path;
+	output_paths.path_to_mesh_emb.append("\\Emb_Mesh.txt");
 	
-	o_paths.path_to_src_skel = folder_path;
-	o_paths.path_to_src_skel.append("\\src_skeleton.xml");
+	output_paths.path_to_mesh_out = folder_path;
+	output_paths.path_to_mesh_out.append("\\Gen_Mesh.txt");
 	
-	o_paths.path_to_def_skel = folder_path;
-	o_paths.path_to_def_skel.append("\\dst_skeleton.xml");
+	output_paths.path_to_src_skel = folder_path;
+	output_paths.path_to_src_skel.append("\\src_skeleton.xml");
 	
-	o_paths.path_to_src_cs = folder_path;
-	o_paths.path_to_src_cs.append("\\src_cross_sections.stl");
+	output_paths.path_to_def_skel = folder_path;
+	output_paths.path_to_def_skel.append("\\dst_skeleton.xml");
 	
-	o_paths.path_to_def_cs = folder_path;
-	o_paths.path_to_def_cs.append("\\dst_cross_sections.stl");
+	output_paths.path_to_src_cs = folder_path;
+	output_paths.path_to_src_cs.append("\\src_cross_sections.xml");
+	
+	output_paths.path_to_def_cs = folder_path;
+	output_paths.path_to_def_cs.append("\\dst_cross_sections.xml");
 }
 //

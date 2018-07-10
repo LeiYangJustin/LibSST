@@ -40,7 +40,7 @@ void CSSTDeformer::LocalDeformationSetUp(
 	}
 }
 
-void CSSTDeformer::LocalDeformationSolve(
+bool CSSTDeformer::LocalDeformationSolve(
 	const std::vector<CCrossSection> def_cs_list,
 	COpenMeshT *p_mesh,
 	COpenMeshT *p_mesh_def)
@@ -64,16 +64,18 @@ void CSSTDeformer::LocalDeformationSolve(
 		bound_xCoords.first = left_def_cs_pts[0][0];
 		bound_xCoords.second = right_def_cs_pts[0][0];
 
-		//std::cout << bound_xCoords.first << " " << bound_xCoords.second << std::endl;
+		//std::cout << cs_pair.first << " " << cs_pair.second << std::endl;
+		//std::cout << left_cs_pts.size() << " " << left_def_cs_pts.size() << std::endl;
+		//std::cout << right_cs_pts.size() << " " << right_def_cs_pts.size() << std::endl;
 
 		// check
 		if (left_cs_pts.size() != left_def_cs_pts.size()) {
 			std::cerr << "sizes of the original and deformed left CSs do not match" << std::endl;
-			return;
+			return false;
 		}
 		if (right_cs_pts.size() != right_def_cs_pts.size()) {
 			std::cerr << "sizes of the original and deformed right CSs do not match" << std::endl;
-			return;
+			return false;
 		}
 
 		// in
@@ -109,6 +111,8 @@ void CSSTDeformer::LocalDeformationSolve(
 			p_mesh_def->data(def_vh).set_emb_coord(pt);
 		}
 	}
+
+	return true;
 }
 
 void CSSTDeformer::GlobalDeformationSetup(std::vector<CCrossSection> cs_list)
@@ -127,7 +131,7 @@ void CSSTDeformer::GlobalDeformationSetup(std::vector<CCrossSection> cs_list)
 	}
 }
 
-void CSSTDeformer::GlobalDeformationSolve(
+bool CSSTDeformer::GlobalDeformationSolve(
 	const std::vector<CCrossSection> def_cs_list,
 	COpenMeshT *p_mesh,
 	COpenMeshT *p_mesh_def)
@@ -144,7 +148,7 @@ void CSSTDeformer::GlobalDeformationSolve(
 	// check
 	if (all_cs_pts.size() != all_def_cs_pts.size()) {
 		std::cerr << "sizes of the original and deformed CSs do not match" << std::endl;
-		return;
+		return false;
 	}
 	// in
 	std::vector<COpenMeshT::Point> all_handles_vecs;
@@ -176,6 +180,8 @@ void CSSTDeformer::GlobalDeformationSolve(
 		COpenMeshT::VertexHandle def_vh = p_mesh_def->vertex_handle(roi_ids[j]);
 		p_mesh_def->set_point(def_vh, pt);
 	}
+
+	return true;
 }
 
 void CSSTDeformer::get_deformer(
@@ -306,41 +312,3 @@ void CSSTDeformer::global_deformation_solve(
 		roi_vecs.push_back(COpenMeshT::Point(rv(0), rv(1), rv(2)));
 	}
 }
-
-//void CSSTDeformer::get_ROI_pids(std::pair<int, int> csid_pair, std::vector<int> roi_ids)
-//{
-//	//std::map<int, int> pid_vid_map;
-//	//std::map<int, int> pid_skeid_map;
-//	//COpenMeshT embMesh;
-//	//
-//	//sst_obj_->GetPidSkeidMap(pid_skeid_map);
-//	//sst_obj_->GetPidVidMap(pid_vid_map);
-//	//sst_obj_->GetEmbeddedMesh(embMesh);
-//
-//	for (auto itmap = pid_skeid_map.begin(); itmap != pid_skeid_map.end(); ++itmap)
-//	{
-//		int id_first = csid_pair.first;
-//		int id_second = csid_pair.second;
-//
-//		double al_first = 0, al_second = 0;
-//		for (int j = 0; j < id_first; j++)
-//			al_first += (skelPts_[j + 1] - skelPts_[j]).norm();
-//		for (int j = 0; j < id_second; j++)
-//			al_second += (skelPts_[j + 1] - skelPts_[j]).norm();
-//
-//		// 
-//		if (itmap->second > id_first && itmap->second < id_second) {
-//			roi_ids.push_back(itmap->first);
-//		}
-//		else if (itmap->second == id_first) {
-//			auto p = embMesh.point(embMesh.vertex_handle(itmap->first));
-//			if (p[0] - al_first > 0)
-//				roi_ids.push_back(itmap->first);
-//		}
-//		else if (itmap->second == id_second) {
-//			auto p = embMesh.point(embMesh.vertex_handle(itmap->first));
-//			if (p[0] - al_second < 0)
-//				roi_ids.push_back(itmap->first);
-//		}
-//	}
-//}

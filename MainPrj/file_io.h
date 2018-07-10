@@ -19,6 +19,7 @@ public:
 		std::string path_to_mesh_in;
 		std::string path_to_src;
 		std::string path_to_dst;
+		std::string path_to_outfolder;
 	};
 
 	struct OutputPaths
@@ -46,15 +47,21 @@ public:
 	static bool xml_write_skeleton(std::string fname, const CSkeleton &s);
 
 	static bool xml_read_a_section(std::string fname, const int csid, CCrossSection &cs);
-	static bool xml_write_a_section(std::string fname, const int csid, const CCrossSection &cs);
+	//static bool xml_write_a_section(std::string fname, const int csid, const CCrossSection &cs);
+	
+	static bool xml_read_sections(std::string fname, std::vector<CCrossSection> &cs_list);
 	static bool xml_write_sections(std::string fname, const std::vector<CCrossSection> &cs_list);
 
 	static SwitchType xml_read_config_file(
-		const std::string fname, CFileIO::InputPaths in_paths);
+		const std::string fname, CFileIO::InputPaths &in_paths);
+
+	static SwitchType ini_read_config_file(
+		const std::string fname, CFileIO::InputPaths &in_paths);
+	static bool ini_write_config_file(const std::string fname);
 
 	static bool write_mesh(std::string fname, COpenMeshT &mesh, bool is_emb);
-	static bool print_SST(CSstObject* sst);
-	static void set_output_path(std::string path, CFileIO::OutputPaths o_paths);
+	static bool print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths);
+	static void set_output_path(std::string path, CFileIO::OutputPaths &output_paths);
 
 };
 
