@@ -57,10 +57,13 @@ public:
 
 	static SwitchType ini_read_config_file(
 		const std::string fname, CFileIO::InputPaths &in_paths);
-	static bool ini_write_config_file(const std::string fname);
+	static bool ini_write_config_file_to_pending(const std::string fname);
 
-	static bool write_mesh(std::string fname, COpenMeshT &mesh, bool is_emb);
+	static bool write_mesh(std::string fname, COpenMeshT &mesh, bool is_emb = false);
+	static bool write_mesh_to_stl(std::string fname, COpenMeshT &mesh, bool is_emb = false);
+
 	static bool print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths);
+	static bool print_CS(CSstObject* sst, std::string fname);
 	static void set_output_path(std::string path, CFileIO::OutputPaths &output_paths);
 
 };

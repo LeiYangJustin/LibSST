@@ -5,7 +5,7 @@
 void CSstObject::LocalDeformSetup()
 {
 	assert(has_local_deformation_);
-	std::cout << "Time spent for Local Setup: " << std::endl;
+	
 	auto t1 = std::chrono::high_resolution_clock::now();
 
 	// DEFORMATION CODES
@@ -20,7 +20,7 @@ void CSstObject::LocalDeformSetup()
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	std::cout << time_span.count() << " seconds" << std::endl;
+	std::cout << "Time spent for Local Setup: " << time_span.count() << " seconds" << std::endl;
 }
 
 void CSstObject::GlobalDeformSetup(bool use_local_setup)
@@ -30,7 +30,6 @@ void CSstObject::GlobalDeformSetup(bool use_local_setup)
 		std::cerr << "The locally supported RBF is not available now" << std::endl;
 	}
 	else {
-		std::cout << "Time spent for Global Setup: " << std::endl;
 		auto t1 = std::chrono::high_resolution_clock::now();
 
 		// DEFORMATION CODES
@@ -43,7 +42,7 @@ void CSstObject::GlobalDeformSetup(bool use_local_setup)
 		// DEFORMATION CODES
 		auto t2 = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-		std::cout << "setup done: "<< time_span.count() << " seconds" << std::endl;
+		std::cout << "Time spent for Global Setup: " << time_span.count() << " seconds" << std::endl;
 	}
 }
 
@@ -57,8 +56,16 @@ bool CSstObject::LocalDeformSolve()
 		def_cross_sections.push_back(map_id_cross_sections_[id]);
 	}
 	this->def_trimesh_ = this->trimesh_;
+	//
+	auto t1 = std::chrono::high_resolution_clock::now();
+	//
 	if (deformer_->LocalDeformationSolve(def_cross_sections, &this->trimesh_, &this->def_trimesh_)) {
 		decoding_mesh(); // have the deformed mesh in the original space
+		//
+		auto t2 = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+		std::cout << "Time spent for Local Solve: " << time_span.count() << " seconds" << std::endl;
+		//
 		is_deformed_ = true;
 		return true;
 	}
@@ -81,10 +88,17 @@ bool CSstObject::GlobalDeformSolve()
 		{
 			def_cross_sections.push_back(miter->second);
 		}
+		//
+		auto t1 = std::chrono::high_resolution_clock::now();
+		//
 		if (deformer_->GlobalDeformationSolve(def_cross_sections, &this->trimesh_, &this->def_trimesh_))
 		{
+			//
+			auto t2 = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+			std::cout << "Time spent for Global Solve: " << time_span.count() << " seconds" << std::endl;
+			//
 			is_deformed_ = true;
-			std::cout << "global deformation failed" << std::endl;
 			return true;
 		}
 		else {
@@ -139,10 +153,22 @@ void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 		COpenMeshT::Point cemb(skeleton_.GetAccumArcLength()[sid], 0.0, 0.0);
 		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
 		COpenMeshT::Point tang_vec(rmf_list[sid](0, 0), rmf_list[sid](0, 1), rmf_list[sid](0, 2));
-		std::cout << "cs_extraction: " << sid << std::endl;
-		extracting_single_cross_section(skeleton_.GetSkeletalPts()[sid], tang_vec, cs_pts);
+		std::cout << "cs_extraction: " << sid << "; " << cemb << std::endl;
+		//extracting_single_cross_section(skeleton_.GetSkeletalPts()[sid], tang_vec, cs_pts);
 		extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), emb_cs_pts, true);
-		// use decoding code to transform embedded cross-sections to original space for visualization
+
+		Vector3d skelPt(skeleton_.GetSkeletalPts()[sid][0], 
+			skeleton_.GetSkeletalPts()[sid][1], 
+			skeleton_.GetSkeletalPts()[sid][2]);
+		Vector3d cembPt(cemb[0], cemb[1], cemb[2]);
+		for (int j = 0; j < emb_cs_pts.size(); j++)
+		{
+			Vector3d ept(emb_cs_pts[j][0], emb_cs_pts[j][1], emb_cs_pts[j][2]);
+			ept(0) = ept(0) - skeleton_.GetAccumArcLength()[sid];
+			Vector3d pt = rmf_list[sid].transpose() * ept + skelPt;
+			cs_pts.push_back(COpenMeshT::Point(pt(0), pt(1), pt(2)));
+		}
+
 		// init cs
 		CCrossSection cs;
 		cs.SetSid(sid);
@@ -168,7 +194,8 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 		COpenMeshT::VertexHandle vh_from = trimesh_.from_vertex_handle(heh);
 		COpenMeshT::VertexHandle vh_to = trimesh_.to_vertex_handle(heh);
 
-		COpenMeshT::Point p_from, p_to;
+		COpenMeshT::Point p_from;
+		COpenMeshT::Point p_to;
 		if (is_emb) {
 			p_from = trimesh_.data(vh_from).get_emb_coord();
 			p_to = trimesh_.data(vh_to).get_emb_coord();
@@ -204,13 +231,17 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 	// sorting the vertices
 	//CGeoCalculator::reconstruct_curve_from_pointset(cs_pts);
 
-	//CGeoCalculator::pts_sorting_alg(cs_pts);
-	//CGeoCalculator::simplify_polygon(cs_pts);
-	//if (has_global_deformation_)
-	//	CGeoCalculator::sample_polygon(cs_pts, 0.02, true);
-	//else
-	//	CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
-	//std::cout << cs_pts.size() << std::endl;
+	bool use_sorting = true;
+	if (use_sorting) {
+		CGeoCalculator::pts_sorting_alg(cs_pts);
+		CGeoCalculator::simplify_polygon(cs_pts);
+		CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
+		/*if (has_global_deformation_)
+			CGeoCalculator::sample_polygon(cs_pts, 0.02, true);
+		else
+			CGeoCalculator::sample_polygon(cs_pts, 0.01, true);*/
+		//std::cout << cs_pts.size() << std::endl;
+	}
 }
 
 void CSstObject::decoding_vector_field(DenseMatrixXd & U, 

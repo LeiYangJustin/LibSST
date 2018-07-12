@@ -184,7 +184,7 @@ bool CFileIO::xml_read_a_section(std::string fname, const int sid, CCrossSection
 		std::string id_value = cs_node.attribute("ID").value();
 		int tmp_csid = atoi(id_value.c_str());
 		if (sid == tmp_sid) {
-			std::cout << "ID" << tmp_csid << ", SPID " << tmp_sid << std::endl;
+			//std::cout << "ID" << tmp_csid << ", SPID " << tmp_sid << std::endl;
 			pugi::xml_node pt_node = cs_node.first_child();
 			for (; pt_node; pt_node = pt_node.next_sibling())
 			{
@@ -266,7 +266,7 @@ bool CFileIO::xml_read_sections(std::string fname, std::vector<CCrossSection>& c
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(fname.c_str());
 	if (!result) {
-		std::cerr << "Error at CFileIO::xml_read_skeleton()" << std::endl;
+		std::cerr << "Error at CFileIO::xml_read_sections()" << std::endl;
 		return false;
 	}
 
@@ -276,7 +276,7 @@ bool CFileIO::xml_read_sections(std::string fname, std::vector<CCrossSection>& c
 		//
 		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
 		int csid, spid;
-		bool is_closed;
+		bool is_closed, is_deformed;
 		//
 		std::string str_id_value = cs_node.attribute("ID").value();
 		csid = atoi(str_id_value.c_str());
@@ -286,8 +286,12 @@ bool CFileIO::xml_read_sections(std::string fname, std::vector<CCrossSection>& c
 			is_closed = true;
 		else 
 			is_closed = false;
+		if (strcmp(cs_node.attribute("IsDeformed").value(), "T") == 0)
+			is_deformed = true;
+		else
+			is_deformed = false;
 
-		std::cout << "ID: " << csid << ", SPID: " << spid << ", IsClosed: " << is_closed << std::endl;
+		std::cout << "deformed CS ID: " << csid << ", SPID: " << spid << ", IsClosed: " << is_closed << std::endl;
 
 		//std::cout << node.attribute("ID").value() << "   Y" << std::endl;
 		pugi::xml_node pt_node = cs_node.first_child();
@@ -348,6 +352,10 @@ bool CFileIO::xml_write_sections(std::string fname, const std::vector<CCrossSect
 			tmp_cs.append_attribute("IsClosed").set_value("T");
 		else
 			tmp_cs.append_attribute("IsClosed").set_value("F");
+		if (cs_iter->IsDeformed())
+			tmp_cs.append_attribute("IsDeformed").set_value("T");
+		else
+			tmp_cs.append_attribute("IsDeformed").set_value("F");
 
 		// add point nodes and their attributes
 		for (int i = 0; i < cs_pts.size(); i++) {
@@ -414,6 +422,36 @@ bool CFileIO::write_mesh(std::string fname, COpenMeshT & m, bool is_emb)
 	}
 	fout_file.close();
 	return true;
+}
+
+bool CFileIO::write_mesh_to_stl(std::string fname, COpenMeshT & mesh, bool is_emb)
+{
+	std::ofstream out_file(fname);
+	if (out_file.is_open())
+	{
+		char* obj_name = "SF";
+		out_file << "solid " << obj_name << std::endl;
+		for (COpenMeshT::FaceIter fiter = mesh.faces_begin();
+			fiter != mesh.faces_end(); ++fiter)
+		{
+			out_file << "    facet normal " << mesh.normal(*fiter) << std::endl;
+			out_file << "        outer loop " << std::endl;
+			for (COpenMeshT::FaceVertexCCWIter fviter = mesh.fv_ccwbegin(*fiter);
+				fviter != mesh.fv_ccwend(*fiter);  ++fviter)
+			{
+				if (!is_emb)
+					out_file << "            vertex " << mesh.point(*fviter) << std::endl;
+				else
+					out_file << "            vertex " << mesh.data(*fviter).get_emb_coord() << std::endl;
+			}
+			out_file << "        endloop" << std::endl;
+			out_file << "    endfacet" << std::endl;
+		}
+		out_file << "endsolid" << std::endl;
+		out_file.close();
+		return true;
+	}
+	return false;
 }
 
 //bool CFileIO::read_config_file_ini(std::string fname)
@@ -550,18 +588,18 @@ SwitchType CFileIO::ini_read_config_file(const std::string fname, CFileIO::Input
 	}
 	else if (topLevel("Init").depth)
 	{
-		std::cout << topLevel("Init")["State"] << std::endl;
+		std::cout << "State: " << topLevel("Init")["State"] << std::endl;
 
 		in_paths.path_to_config_in = fname;
 		in_paths.path_to_mesh_in = topLevel("Init")["Mesh"];
-		//in_paths.path_to_outfolder = topLevel("Init")["OutputFolder"];
+		in_paths.path_to_outfolder = topLevel("Init")["OutputFolder"];
 		in_paths.path_to_src = topLevel("Init")["SrcPath"];
 		
 		return SwitchType::sstInit;
 	}
 	else if (topLevel("Global").depth)
 	{
-		std::cout << topLevel("Global")["State"] << std::endl;
+		std::cout << "State: " << topLevel("Global")["State"] << std::endl;
 
 		in_paths.path_to_config_in = fname;
 		in_paths.path_to_mesh_in = topLevel("Global")["Mesh"];
@@ -573,7 +611,7 @@ SwitchType CFileIO::ini_read_config_file(const std::string fname, CFileIO::Input
 	}
 	else if (topLevel("Local").depth)
 	{
-		std::cout << topLevel("Local")["State"] << std::endl;
+		std::cout << "State: " << topLevel("Local")["State"] << std::endl;
 
 		in_paths.path_to_config_in = fname;
 		in_paths.path_to_mesh_in = topLevel("Local")["Mesh"];
@@ -589,7 +627,7 @@ SwitchType CFileIO::ini_read_config_file(const std::string fname, CFileIO::Input
 	}
 }
 
-bool CFileIO::ini_write_config_file(const std::string fname)
+bool CFileIO::ini_write_config_file_to_pending(const std::string fname)
 {
 	std::ofstream out_file(fname);
 
@@ -625,9 +663,9 @@ bool CFileIO::print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
 		return false;
 	if (!CFileIO::xml_write_sections(fname_src_cross_sections_, cs_list))
 		return false;
-	if (!write_mesh(fname_src_mesh_, m, false))
+	if (!write_mesh_to_stl(fname_src_mesh_, m, false))
 		return false;
-	if (!write_mesh(fname_src_emb_mesh_, m, true) && sst->IsEncode())
+	if (!write_mesh_to_stl(fname_src_emb_mesh_, m, true) && sst->IsEncode())
 		return false;
 
 	if (sst->IsDeformed())
@@ -647,11 +685,20 @@ bool CFileIO::print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
 			return false;
 		if (!CFileIO::xml_write_sections(fname_dst_cross_sections_, def_cross_sections))
 			return false;
-		if (!write_mesh(fname_dst_mesh_, dm, false))
+		if (!write_mesh_to_stl(fname_dst_mesh_, dm, false))
 			return false;
 		//if (!write_mesh(fname_dst_emb_mesh_, dm, true) && sst->IsEncode())
 		//	return false;
 	}
+
+	return true;
+}
+bool CFileIO::print_CS(CSstObject * sst, std::string fname)
+{
+	std::vector<CCrossSection> cs_list;
+	sst->GetCrossSections(cs_list);
+	if (!CFileIO::xml_write_sections(fname, cs_list))
+		return false;
 
 	return true;
 }
@@ -661,25 +708,27 @@ void CFileIO::set_output_path(std::string path, CFileIO::OutputPaths &output_pat
 
 	//std::string folder_path;
 	std::string folder_path;
-	size_t a = path.find_last_of("\\");
-
-	for (int i = 0; i < a; i++) {
-		//std::cout << path[i];
-		folder_path.push_back(path[i]);
+	size_t a = 0;
+	if (folder_path.length() != 0) {
+		a = path.find_last_of("\\");
+		std::cout << "a = path.find_last_of() --> " << a << std::endl;
+		for (int i = 0; i < a; i++) {
+			//std::cout << path[i];
+			folder_path.push_back(path[i]);
+		}
 	}
-	//std::cout  << std::endl;
 	folder_path.append("\\OutputData");
 
 	output_paths.path_to_folder = folder_path;
 	
 	output_paths.path_to_mesh_in = folder_path;
-	output_paths.path_to_mesh_in.append("\\Src_Mesh.txt");
+	output_paths.path_to_mesh_in.append("\\Src_Mesh.stl");
 	
 	output_paths.path_to_mesh_emb = folder_path;
-	output_paths.path_to_mesh_emb.append("\\Emb_Mesh.txt");
+	output_paths.path_to_mesh_emb.append("\\Emb_Mesh.stl");
 	
 	output_paths.path_to_mesh_out = folder_path;
-	output_paths.path_to_mesh_out.append("\\Gen_Mesh.txt");
+	output_paths.path_to_mesh_out.append("\\Gen_Mesh.stl");
 	
 	output_paths.path_to_src_skel = folder_path;
 	output_paths.path_to_src_skel.append("\\src_skeleton.xml");

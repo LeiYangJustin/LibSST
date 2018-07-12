@@ -32,6 +32,7 @@ public:
 	void SetSkeleton(CSkeleton &skel) 
 	{
 		skeleton_.CopyFrom(skel);
+		is_encoded_ = false;
 	};
 	CSkeleton GetSkeleton() const
 	{
@@ -40,6 +41,7 @@ public:
 	void SetMesh(COpenMeshT &mesh)
 	{
 		trimesh_ = mesh;
+		is_encoded_ = false;
 	};
 	COpenMeshT& GetMesh()
 	{

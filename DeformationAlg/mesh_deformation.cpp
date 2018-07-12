@@ -25,7 +25,8 @@ void CMeshDeformation::SetUp(const DenseMatrixXd & pts_handles)
 		KerMat.row(i) = v;
 	}
 	KMQR_ = KerMat.colPivHouseholderQr();
-	//std::cout << KerMat.rows() << ", " << KerMat.cols() << std::endl;
+
+	//std::cerr << "KERNEL SIZE = " << KerMat.rows() << ", " << KerMat.cols() << std::endl;
 }
 
 void CMeshDeformation::Solve(
@@ -83,6 +84,8 @@ void CMeshDeformation::Solve(
 	DenseMatrixXd & roi_vecs)
 {
 	// SOME CODES
+	//std::cerr << "RHS SIZE = " << vecs_handles.rows() << ", " << vecs_handles.cols() << std::endl;
+
 	DenseMatrixXd w = KMQR_.solve(vecs_handles);
 	// obtain the (embedded) deformation fields
 	int numROIPts = roi_pts.rows();
@@ -90,14 +93,9 @@ void CMeshDeformation::Solve(
 	roi_vecs.setZero();
 
 	for (int i = 0; i < numROIPts; i++) {
-		//std::cout << "Time spent for decomposition Solve: " << std::endl;
-		//auto t1 = std::chrono::high_resolution_clock::now();
 		Eigen::VectorXd v;
 		computeKernelMatrixRow(v, roi_pts.row(i), pts_handles_, S_);
 		roi_vecs.row(i) = w.transpose()*v;
-		//auto t2 = std::chrono::high_resolution_clock::now();
-		//std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-		//std::cout << time_span.count() << " seconds" << std::endl;
 	}
 }
 
