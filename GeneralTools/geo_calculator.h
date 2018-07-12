@@ -39,13 +39,22 @@ public:
 	static void computeOBB(const std::vector<COpenMeshT::Point> & pts, std::vector<double> & obb);
 	
 	// Bezier curve discretization
-	static void getBernsteinBasis(int n, double step, Eigen::MatrixXd & Bmat);
+	static std::vector<double> getBernsteinBasis(int n, double step, Eigen::MatrixXd & Bmat);
+	static void getBernsteinBasis(int n, std::vector<double> t, Eigen::MatrixXd & Bmat);
 	static void getSampleFromBezier(
 		Eigen::MatrixXd & sample_pts,
 		Eigen::MatrixXd & ctrl_pts,
 		double step=0.01);
+	static void getEqualArcLengthSampleFromBezier(
+		std::vector<COpenMeshT::Point> & sample_pts,
+		std::vector<double> & tparas,
+		const std::vector<COpenMeshT::Point> & ctrl_pts,
+		int numSamples);
 	// nchoosek
 	static double nchoosek(int n, int k);
+
+	static void convertOMptToEigenMat(const std::vector<COpenMeshT::Point> om_pts, Eigen::MatrixXd & Mat);
+	static void convertEigenMatToOMpt(const Eigen::MatrixXd & Mat, std::vector<COpenMeshT::Point> & om_pts);
 
 	// pt sorting alg; 
 	static void pts_sorting_alg(std::vector<COpenMeshT::Point> &pts);

@@ -45,7 +45,7 @@ int main(int argc ,char** argv)
 	{
 		std::cerr << "This is C++ testing mode with argc == 1" << std::endl;
 		
-		path_to_cfg = "Data\\SolverLocal.ini";
+		path_to_cfg = "Data\\SolverInit.ini";
 		//path_to_cfg = "E:\\Research\\SSTsystem\\LibSST\\MainPrj\\Data\\SolverInit.ini";
 		maxIter = 3;
 		cs_spacing = 5;
@@ -65,6 +65,17 @@ int main(int argc ,char** argv)
 	else {
 		return 0;
 	}
+
+	//
+	// read skeleton
+	CSkeleton skeleton;
+	if (!CFileIO::xml_read_skeleton("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\Data\\ctrl_skeleton.xml", skeleton)) {
+		std::cerr << "Path to the input skeleton cannot be found!\n";
+		return 0;
+	}
+
+
+
 
 	// init
 	CSstObject* sst_obj = new CSstObject;
@@ -123,7 +134,7 @@ int main(int argc ,char** argv)
 				cnt += cs_spacing;
 			}
 			sst_obj->InitCrossSections(sid_list);
-			// output
+			//// output
 			//sst_obj->PrintSSTandMesh();
 			//CFileIO::OutputPaths output_paths;
 			//CFileIO::set_output_path(in_paths.path_to_outfolder, output_paths);

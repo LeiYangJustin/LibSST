@@ -120,8 +120,9 @@ bool CFileIO::xml_read_skeleton(std::string fname, CSkeleton & s)
 		//// check
 		//std::cout << pt << std::endl;
 	}
-	s.InitData(skelPts);
-
+	//s.InitData(skelPts);
+	CSkeleton tmp_s(skelPts, 100);
+	s.CopyFrom(tmp_s);
 	return true;
 }
 

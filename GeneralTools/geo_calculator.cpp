@@ -338,7 +338,7 @@ void CGeoCalculator::computeOBB(const std::vector<COpenMeshT::Point> & pts, std:
 	out_obb.push_back(obb.bbox().xmax());
 }
 
-void CGeoCalculator::getBernsteinBasis(int n, double step, Eigen::MatrixXd & Bmat)
+std::vector<double>  CGeoCalculator::getBernsteinBasis(int n, double step, Eigen::MatrixXd & Bmat)
 {
 	// parameters
 	std::vector<double> t;
@@ -363,6 +363,21 @@ void CGeoCalculator::getBernsteinBasis(int n, double step, Eigen::MatrixXd & Bma
 			Bmat(i, j) = c*pow(t[i], j)*pow((1.0-t[i]), (n - 1 - j));
 		}
 	}
+
+	return t;
+}
+
+void CGeoCalculator::getBernsteinBasis(int n, std::vector<double> t, Eigen::MatrixXd & Bmat)
+{
+	Bmat.resize(t.size(), n);
+	Bmat.setZero();
+	for (int j = 0; j < n; j++)
+	{
+		for (int i = 0; i < t.size(); i++) {
+			double c = CGeoCalculator::nchoosek(n - 1, j);
+			Bmat(i, j) = c*pow(t[i], j)*pow((1.0 - t[i]), (n - 1 - j));
+		}
+	}
 }
 
 void CGeoCalculator::getSampleFromBezier(
@@ -376,6 +391,55 @@ void CGeoCalculator::getSampleFromBezier(
 	sample_pts = Bmat*ctrl_pts;
 }
 
+void CGeoCalculator::getEqualArcLengthSampleFromBezier(
+	std::vector<COpenMeshT::Point>& om_sample_pts, 
+	std::vector<double>& tparas,
+	const std::vector<COpenMeshT::Point>& om_ctrl_pts, int Nsamples)
+{
+	om_sample_pts.clear();
+	tparas.clear();
+
+	Eigen::MatrixXd ctrl_pts;
+	convertOMptToEigenMat(om_ctrl_pts, ctrl_pts);
+
+	int numCPs = ctrl_pts.rows();
+	Eigen::MatrixXd Bmat;
+	double dt = 0.0001;
+	std::vector<double> ts;
+	ts = getBernsteinBasis(numCPs, dt, Bmat);
+	// get total arc length
+	Eigen::MatrixXd dense_pts;
+	dense_pts = Bmat*ctrl_pts;
+	double total_length = 0.0;
+	for (int i = 1; i < dense_pts.rows(); i++)
+	{
+		total_length += (dense_pts.row(i) - dense_pts.row(i - 1)).norm();
+	}
+	double dD = total_length / double(Nsamples);
+	double accum_length = 0.0;
+	std::vector<double> t_samples;
+	t_samples.push_back(0);
+	for (int i = 1; i < dense_pts.rows(); i++)
+	{
+		if (accum_length > dD) {
+			std::cout << accum_length << ", " << dD << std::endl;
+			t_samples.push_back(ts[i]);
+			accum_length = 0.0;
+		}
+		else {
+			accum_length += (dense_pts.row(i) - dense_pts.row(i - 1)).norm();
+		}
+	}
+	t_samples.push_back(1.0);
+	getBernsteinBasis(numCPs, t_samples, Bmat);
+	Eigen::MatrixXd sample_pts;
+	sample_pts = Bmat*ctrl_pts;
+
+	// convert sample_pts to om_pts;
+	convertEigenMatToOMpt(sample_pts, om_sample_pts);
+	tparas = t_samples;
+}
+
 double CGeoCalculator::nchoosek(int n, int k)
 {
 	if (k < 0 || k > n) {
@@ -386,6 +450,30 @@ double CGeoCalculator::nchoosek(int n, int k)
 		return 1;
 	}
 	return (n * nchoosek(n - 1, k - 1)) / k;
+}
+
+void CGeoCalculator::convertOMptToEigenMat(const std::vector<COpenMeshT::Point> om_pts, Eigen::MatrixXd & Mat)
+{
+	std::vector<double> om_pt_vec;
+	for (int i = 0; i < om_pts.size(); i++)
+	{
+		om_pt_vec.push_back(om_pts[i][0]);
+		om_pt_vec.push_back(om_pts[i][1]);
+		om_pt_vec.push_back(om_pts[i][2]);
+	}
+	Mat = Eigen::Map<Eigen::MatrixXd, Eigen::Unaligned>
+		(om_pt_vec.data(), 3, om_pt_vec.size() / 3);
+	Mat.transposeInPlace();
+}
+
+void CGeoCalculator::convertEigenMatToOMpt(const Eigen::MatrixXd & Mat, std::vector<COpenMeshT::Point>& om_pts)
+{
+	om_pts.clear();
+	for (int i = 0; i < Mat.rows(); i++)
+	{
+		COpenMeshT::Point pt(Mat(i, 0), Mat(i, 1), Mat(i, 2));
+		om_pts.push_back(pt);
+	}
 }
 
 void CGeoCalculator::pts_sorting_alg(std::vector<COpenMeshT::Point>& pts)

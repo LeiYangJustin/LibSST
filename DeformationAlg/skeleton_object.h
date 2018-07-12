@@ -4,7 +4,7 @@
 #include "../DataColle/custom_openmesh_type.h"
 #include "def_alg_prereq.h"
 #include "def_alg_typedef.h"
-
+#include "../GeneralTools/geo_calculator.h"
 
 class DEF_ALGCOLLE_CLASS CCrossSection
 {
@@ -93,22 +93,31 @@ private:
 class DEF_ALGCOLLE_CLASS CSkeleton
 {
 public:
-	CSkeleton(const std::vector<COpenMeshT::Point> skeletal_pts) {
-		skeletal_pts_ = skeletal_pts;
+	CSkeleton(const std::vector<COpenMeshT::Point> pts, int Nsample = 0) {
+		if (Nsample > 0)
+		{
+			ctrl_pts_ = pts;
+			CGeoCalculator::getEqualArcLengthSampleFromBezier(skeletal_pts_, ts_, ctrl_pts_, Nsample);
+		}
+		else {
+			skeletal_pts_ = pts;
+		}
 		compute_rotation_minimizing_frames();
 		compute_accumulated_arc_length();
 	};
 	CSkeleton() { };
 	~CSkeleton() { };
 	CSkeleton(const CSkeleton &b) {
-		skeletal_pts_.clear();
+		ctrl_pts_ = b.GetCtrlPts();
+		ts_ = b.GetTParas();
 		skeletal_pts_ = b.GetSkeletalPts();
 		accum_arclength_ = b.GetAccumArcLength();
 		b.GetRMF(RMF_list_);
 	};
 
 	void CopyFrom(CSkeleton &b) {
-		skeletal_pts_.clear();
+		ctrl_pts_ = b.GetCtrlPts();
+		ts_ = b.GetTParas();
 		skeletal_pts_ = b.GetSkeletalPts();
 		accum_arclength_ = b.GetAccumArcLength();
 		b.GetRMF(RMF_list_);
@@ -126,6 +135,12 @@ public:
 	std::vector<double> GetAccumArcLength() const {
 		return accum_arclength_;
 	}
+	std::vector<COpenMeshT::Point> GetCtrlPts() const {
+		return ctrl_pts_;
+	};
+	std::vector<double> GetTParas() const {
+		return ts_;
+	};
 	void GetRMF(std::vector<Mat3d> &RMF_list) const {
 		for (int i = 0; i < RMF_list_.size(); i++)
 			RMF_list.push_back(RMF_list_[i]);
@@ -133,6 +148,8 @@ public:
 	//void Print();
 
 private:
+	std::vector<COpenMeshT::Point> ctrl_pts_;
+	std::vector<double> ts_;
 	std::vector<COpenMeshT::Point> skeletal_pts_;
 	std::vector<Mat3d> RMF_list_;
 	std::vector<double> accum_arclength_;
