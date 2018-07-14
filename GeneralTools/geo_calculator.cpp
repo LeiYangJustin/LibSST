@@ -422,7 +422,7 @@ void CGeoCalculator::getEqualArcLengthSampleFromBezier(
 	for (int i = 1; i < dense_pts.rows(); i++)
 	{
 		if (accum_length > dD) {
-			std::cout << accum_length << ", " << dD << std::endl;
+			//std::cout << accum_length << ", " << dD << std::endl;
 			t_samples.push_back(ts[i]);
 			accum_length = 0.0;
 		}

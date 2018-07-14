@@ -64,9 +64,8 @@ bool CSSTDeformer::LocalDeformationSolve(
 		bound_xCoords.first = left_def_cs_pts[0][0];
 		bound_xCoords.second = right_def_cs_pts[0][0];
 
-		//std::cout << cs_pair.first << " " << cs_pair.second << std::endl;
-		//std::cout << left_cs_pts.size() << " " << left_def_cs_pts.size() << std::endl;
-		//std::cout << right_cs_pts.size() << " " << right_def_cs_pts.size() << std::endl;
+		std::cout << cs_pair.first << " " << cs_pair.second << std::endl;
+		std::cout << bound_xCoords.first << " " << bound_xCoords.second << std::endl;
 
 		// check
 		if (left_cs_pts.size() != left_def_cs_pts.size()) {

@@ -44,9 +44,7 @@ int main(int argc ,char** argv)
 	if (argc == 1)
 	{
 		std::cerr << "This is C++ testing mode with argc == 1" << std::endl;
-		
-		path_to_cfg = "Data\\SolverInit.ini";
-		//path_to_cfg = "E:\\Research\\SSTsystem\\LibSST\\MainPrj\\Data\\SolverInit.ini";
+		path_to_cfg = "Data\\SolverLocal.ini";
 		maxIter = 3;
 		cs_spacing = 5;
 		is_testing = true;
@@ -66,13 +64,13 @@ int main(int argc ,char** argv)
 		return 0;
 	}
 
-	//
-	// read skeleton
-	CSkeleton skeleton;
-	if (!CFileIO::xml_read_skeleton("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\Data\\ctrl_skeleton.xml", skeleton)) {
-		std::cerr << "Path to the input skeleton cannot be found!\n";
-		return 0;
-	}
+	////
+	//// read skeleton
+	//CSkeleton skeleton;
+	//if (!CFileIO::xml_read_skeleton("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\Data\\ctrl_skeleton.xml", skeleton)) {
+	//	std::cerr << "Path to the input skeleton cannot be found!\n";
+	//	return 0;
+	//}
 
 
 
@@ -83,17 +81,14 @@ int main(int argc ,char** argv)
 	// LOOP TO CATCH ANY CALL
 	while (solver_state != SwitchType::sstExit)
 	{
-		std::cout << "\niter: "<< cntIter << std::endl;
+		//std::cout << "\niter: "<< cntIter++ << std::endl;
+		std::cout << "\n... " << std::endl;
 		// step 1: read the config file and update the two global switchs
 		CFileIO::InputPaths in_paths;
-		//solver_state = CFileIO::xml_read_config_file(argv, in_paths);
-
-		std::cout << "Configure file path: " << path_to_cfg << std::endl;
+		//std::cout << "Configure file path: " << path_to_cfg << std::endl;
 		solver_state = CFileIO::ini_read_config_file(path_to_cfg, in_paths);
 		std::string path_to_gen_mesh = cCurrentPath;
 		path_to_gen_mesh.append("\\gen_mesh.stl");
-		std::string path_to_gen_cs = cCurrentPath;
-		path_to_gen_cs.append("\\src_sections.xml");
 
 		// exit when all switches are off
 		switch (solver_state)
@@ -122,6 +117,9 @@ int main(int argc ,char** argv)
 				std::cerr << "Path to the input skeleton cannot be found!\n";
 				return 0;
 			}
+			// visualize skeleton
+			std::cout << skeleton.GetCtrlPts().size() << std::endl;
+			CFileIO::xml_write_skeleton_bezier(in_paths.path_to_src, skeleton);
 			// Initialization SST
 			sst_obj->SetSkeleton(skeleton);
 			sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
@@ -139,6 +137,8 @@ int main(int argc ,char** argv)
 			//CFileIO::OutputPaths output_paths;
 			//CFileIO::set_output_path(in_paths.path_to_outfolder, output_paths);
 			//CFileIO::print_SST(sst_obj, output_paths);
+			std::string path_to_gen_cs = cCurrentPath;
+			path_to_gen_cs.append("\\src_sections.xml");
 			CFileIO::print_CS(sst_obj, path_to_gen_cs);
 			CFileIO::ini_write_config_file_to_pending(path_to_cfg);
 			break;
@@ -147,6 +147,7 @@ int main(int argc ,char** argv)
 		{
 			if (is_testing) {
 				std::cerr << "Temporary init..." << std::endl;
+
 				// read mesh
 				CMeshObject * p_mesh_src_obj = new CMeshObject;
 				if (!CDataIO::ReadMesh(in_paths.path_to_mesh_in, *p_mesh_src_obj)) {
@@ -159,6 +160,9 @@ int main(int argc ,char** argv)
 					std::cerr << "Path to the input skeleton cannot be found!\n";
 					return 0;
 				}
+				// visualize skeleton
+				//std::cout << skeleton.GetCtrlPts().size() << std::endl;
+				//CFileIO::xml_write_skeleton_bezier(in_paths.path_to_src, skeleton);
 				// Initialization SST
 				sst_obj->SetSkeleton(skeleton);
 				sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
@@ -171,6 +175,31 @@ int main(int argc ,char** argv)
 					cnt += cs_spacing;
 				}
 				sst_obj->InitCrossSections(sid_list);
+
+				//// read mesh
+				//CMeshObject * p_mesh_src_obj = new CMeshObject;
+				//if (!CDataIO::ReadMesh(in_paths.path_to_mesh_in, *p_mesh_src_obj)) {
+				//	std::cerr << "Path to the mesh model cannot be found!\n";
+				//	return 0;
+				//}
+				//// read skeleton
+				//CSkeleton skeleton;
+				//if (!CFileIO::xml_read_skeleton(in_paths.path_to_src, skeleton)) {
+				//	std::cerr << "Path to the input skeleton cannot be found!\n";
+				//	return 0;
+				//}
+				//// Initialization SST
+				//sst_obj->SetSkeleton(skeleton);
+				//sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
+				//sst_obj->Encode();
+				//// Get cross-sections
+				//std::vector<int> sid_list;
+				//int cnt = 5;
+				//while (cnt < skeleton.GetAccumArcLength().size()) {
+				//	sid_list.push_back(cnt);
+				//	cnt += cs_spacing;
+				//}
+				//sst_obj->InitCrossSections(sid_list);
 			}
 			if (!sst_obj->IsEncode())
 			{
@@ -188,6 +217,9 @@ int main(int argc ,char** argv)
 			if (!CFileIO::xml_read_skeleton(in_paths.path_to_dst, def_skeleton)) {
 				return 0;
 			}
+			// visualize def_skeleton
+			CFileIO::xml_write_skeleton_bezier(in_paths.path_to_dst, def_skeleton);
+			// set deformed skeleton
 			sst_obj->SetDefSkeleton(def_skeleton);
 			// deform
 			sst_obj->GlobalDeformSetup();
@@ -196,7 +228,6 @@ int main(int argc ,char** argv)
 			COpenMeshT def_mesh;
 			if (sst_obj->OutputDefMesh(def_mesh))
 			{
-				//CFileIO::write_mesh(path_to_gen_mesh, def_mesh, false);
 				CFileIO::write_mesh_to_stl(path_to_gen_mesh, def_mesh);
 				std::cout << "Global deformation done" << std::endl;
 				std::cout << "Gen_Mesh output to path: " << path_to_gen_mesh << std::endl;
@@ -213,6 +244,7 @@ int main(int argc ,char** argv)
 		{
 			if (is_testing) {
 				std::cout << "Temporary init..." << std::endl;
+
 				// read mesh
 				CMeshObject * p_mesh_src_obj = new CMeshObject;
 				if (!CDataIO::ReadMesh(in_paths.path_to_mesh_in, *p_mesh_src_obj)) {
@@ -221,11 +253,14 @@ int main(int argc ,char** argv)
 				}
 				// read skeleton
 				CSkeleton skeleton;
-				std::string skel_fname = "Data\\src_skeleton.xml";
+				std::string skel_fname = "Data\\src_ctrl_skeleton.xml";
 				if (!CFileIO::xml_read_skeleton(skel_fname, skeleton)) {
 					std::cerr << "Path to the input skeleton cannot be found!\n";
 					return 0;
 				}
+				// visualize skeleton
+				//std::cout << skeleton.GetCtrlPts().size() << std::endl;
+				//CFileIO::xml_write_skeleton_bezier(in_paths.path_to_src, skeleton);
 				// Initialization SST
 				sst_obj->SetSkeleton(skeleton);
 				sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
@@ -238,6 +273,32 @@ int main(int argc ,char** argv)
 					cnt += cs_spacing;
 				}
 				sst_obj->InitCrossSections(sid_list);
+
+				//// read mesh
+				//CMeshObject * p_mesh_src_obj = new CMeshObject;
+				//if (!CDataIO::ReadMesh(in_paths.path_to_mesh_in, *p_mesh_src_obj)) {
+				//	std::cerr << "Path to the mesh model cannot be found!\n";
+				//	return 0;
+				//}
+				//// read skeleton
+				//CSkeleton skeleton;
+				//std::string skel_fname = "Data\\src_crtl_skeleton.xml";
+				//if (!CFileIO::xml_read_skeleton(skel_fname, skeleton)) {
+				//	std::cerr << "Path to the input skeleton cannot be found!\n";
+				//	return 0;
+				//}
+				//// Initialization SST
+				//sst_obj->SetSkeleton(skeleton);
+				//sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
+				//sst_obj->Encode();
+				//// Get cross-sections
+				//std::vector<int> sid_list;
+				//int cnt = 5;
+				//while (cnt < skeleton.GetAccumArcLength().size()) {
+				//	sid_list.push_back(cnt);
+				//	cnt += cs_spacing;
+				//}
+				//sst_obj->InitCrossSections(sid_list);
 			}
 			
 			if (!sst_obj->IsEncode())
@@ -276,7 +337,7 @@ int main(int argc ,char** argv)
 			COpenMeshT def_mesh;
 			if (sst_obj->OutputDefMesh(def_mesh))
 			{
-				CFileIO::write_mesh(path_to_gen_mesh, def_mesh, false);
+				CFileIO::write_mesh_to_stl(path_to_gen_mesh, def_mesh, false);
 				std::cerr << "Local deformation done" << std::endl;
 				std::cerr << "Gen_Mesh output to path: " << path_to_gen_mesh << std::endl;
 				CFileIO::ini_write_config_file_to_pending(path_to_cfg);
@@ -290,12 +351,12 @@ int main(int argc ,char** argv)
 		}
 		case SwitchType::sstPending:
 		{
-			std::cerr << "Pending..." << std::endl;
+			//std::cerr << "Pending..." << std::endl;
 			std::this_thread::sleep_for(std::chrono::seconds(2));
 			break;
 		}
 		default : {
-			std::cerr << "Pending..." << std::endl;
+			//std::cerr << "Pending..." << std::endl;
 			std::this_thread::sleep_for(std::chrono::seconds(2));
 			break;
 		}

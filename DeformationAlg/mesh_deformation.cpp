@@ -4,7 +4,7 @@
 CMeshDeformation::CMeshDeformation()
 {
 	S_.setIdentity();
-	//S_(0, 0) = 0.01; // scaling
+	S_(0, 0) = 0.01; // scaling
 }
 
 

@@ -44,7 +44,8 @@ public:
 
 
 	static bool xml_read_skeleton(std::string fname, CSkeleton &s);
-	static bool xml_write_skeleton(std::string fname, const CSkeleton &s);
+	static bool xml_write_skeleton_polyline(std::string fname, const CSkeleton &s);
+	static bool xml_write_skeleton_bezier(std::string fname, const CSkeleton &s);
 
 	static bool xml_read_a_section(std::string fname, const int csid, CCrossSection &cs);
 	//static bool xml_write_a_section(std::string fname, const int csid, const CCrossSection &cs);

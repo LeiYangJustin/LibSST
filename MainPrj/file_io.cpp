@@ -103,30 +103,51 @@ bool CFileIO::xml_read_skeleton(std::string fname, CSkeleton & s)
 		return false;
 	}
 
-	std::vector<COpenMeshT::Point> skelPts;
-	pugi::xml_node ss = doc.child("DUT_AutoMorpher").child("Skeleton");
-	for (pugi::xml_node vertex = ss.first_child(); vertex; vertex = vertex.next_sibling())
+	std::vector<COpenMeshT::Point> ctrlPts, skelPts;
+	std::vector<double>ts;
+	pugi::xml_node skel_node = doc.child("DUT_AutoMorpher").child("Skeleton");
+	pugi::xml_node pt_node = skel_node.first_child();
+	for (; pt_node; pt_node = pt_node.next_sibling())
 	{
-		int cnt = 3; COpenMeshT::Point pt(0, 0, 0); double a;
-		for (pugi::xml_attribute attr = vertex.last_attribute(); 
-			attr; attr = attr.previous_attribute()) {
-			if (cnt--) {
-				std::istringstream ss(attr.value());
-				ss >> a;
-				pt[cnt] = a;
-			}
+		COpenMeshT::Point pt(0.0, 0.0, 0.0);
+		double t;
+		std::istringstream sx(pt_node.attribute("X").value());
+		sx >> pt[0];
+		std::istringstream sy(pt_node.attribute("Y").value());
+		sy >> pt[1];
+		std::istringstream sz(pt_node.attribute("Z").value());
+		sz >> pt[2];
+		std::istringstream st(pt_node.attribute("t").value());
+		st >> t;
+		if (strcmp(pt_node.name(), "Point") == 0) {
+			skelPts.push_back(pt);
+			ts.push_back(t);
 		}
-		skelPts.push_back(pt);
-		//// check
-		//std::cout << pt << std::endl;
+		else if (strcmp(pt_node.name(), "ctrlPt")==0) {
+			ctrlPts.push_back(pt);
+		}
 	}
-	//s.InitData(skelPts);
-	CSkeleton tmp_s(skelPts, 100);
-	s.CopyFrom(tmp_s);
+
+	// change
+	bool is_bezier = false;
+	if (strcmp(skel_node.attribute("IsBezier").value(), "T")==0) {
+		is_bezier = true;
+		std::cout << "bezier true" << std::endl;
+	}
+	if (is_bezier && ts.size() == 0) {
+		std::cout << ctrlPts.size() << std::endl;
+		int numSamples = 100;
+		CSkeleton tmp_s(ctrlPts, numSamples);
+		s.CopyFrom(tmp_s);
+	}
+	else {
+		s.InitData(skelPts);
+	}
+	// change/
 	return true;
 }
 
-bool CFileIO::xml_write_skeleton(std::string fname, const CSkeleton & s)
+bool CFileIO::xml_write_skeleton_polyline(std::string fname, const CSkeleton & s)
 {
 	std::vector<COpenMeshT::Point> skelPts = s.GetSkeletalPts();
 
@@ -137,7 +158,8 @@ bool CFileIO::xml_write_skeleton(std::string fname, const CSkeleton & s)
 
 	dst_doc.append_child("DUT_AutoMorpher");
 	pugi::xml_node dst_ss = dst_doc.child("DUT_AutoMorpher");
-	dst_ss.append_child("Skeleton");
+	pugi::xml_node skel_node = dst_ss.append_child("Skeleton");
+	skel_node.append_attribute("IsBezier").set_value("F");
 	for (int i = 0; i < skelPts.size(); i++) {
 		pugi::xml_node vertex = dst_ss.child("Skeleton").append_child("Point");
 		vertex.append_attribute("X");
@@ -151,17 +173,57 @@ bool CFileIO::xml_write_skeleton(std::string fname, const CSkeleton & s)
 		vertex.prepend_attribute("ID");
 		pugi::xml_attribute attr = vertex.first_attribute();
 		attr.set_value(i);
-
-		//// check
-		//for (pugi::xml_attribute attr = vertex.first_attribute();
-		//	attr; attr = attr.next_attribute(), cnt++) {
-		//	std::cout << attr.value() << " ";
-		//}
-		//std::cout << std::endl;
 	}
+	std::cout << "Saving result: " << dst_doc.save_file(fname.c_str()) << std::endl;
 
-	// save document to file
-	//char* destinate = "E:\\Research\\SSTsystem\\LibSST\\MainPrj\\xml\\defSkeleton.xml";
+	return true;
+}
+
+bool CFileIO::xml_write_skeleton_bezier(std::string fname, const CSkeleton & s)
+{
+	std::vector<COpenMeshT::Point> ctrlPts = s.GetCtrlPts();
+	std::vector<COpenMeshT::Point> skelPts = s.GetSkeletalPts();
+	std::vector<double> ts = s.GetTParas();
+	assert(skelPts.size() == ts.size());
+
+	pugi::xml_document dst_doc;
+	pugi::xml_node decl = dst_doc.prepend_child(pugi::node_declaration);
+	decl.append_attribute("version") = "1.0";
+	decl.append_attribute("encoding") = "UTF-8";
+
+	dst_doc.append_child("DUT_AutoMorpher");
+	pugi::xml_node dst_ss = dst_doc.child("DUT_AutoMorpher");
+	pugi::xml_node skel_node = dst_ss.append_child("Skeleton");
+	skel_node.append_attribute("IsBezier").set_value("T");
+	for (int i = 0; i < ctrlPts.size(); i++) {
+		pugi::xml_node vertex = dst_ss.child("Skeleton").append_child("ctrlPt");
+		vertex.append_attribute("X");
+		vertex.append_attribute("Y");
+		vertex.append_attribute("Z");
+		int cnt = 0;
+		for (pugi::xml_attribute attr = vertex.first_attribute();
+			attr; attr = attr.next_attribute(), cnt++) {
+			attr.set_value(float(ctrlPts[i][cnt]));
+		}
+		vertex.prepend_attribute("ID");
+		pugi::xml_attribute attr = vertex.first_attribute();
+		attr.set_value(i);
+	}
+	for (int i = 0; i < skelPts.size(); i++) {
+		pugi::xml_node vertex = dst_ss.child("Skeleton").append_child("Point");
+		vertex.append_attribute("X");
+		vertex.append_attribute("Y");
+		vertex.append_attribute("Z");
+		int cnt = 0;
+		for (pugi::xml_attribute attr = vertex.first_attribute();
+			attr; attr = attr.next_attribute(), cnt++) {
+			attr.set_value(float(skelPts[i][cnt]));
+		}
+		vertex.append_attribute("t").set_value(float(ts[i]));
+		vertex.prepend_attribute("ID");
+		pugi::xml_attribute attr = vertex.first_attribute();
+		attr.set_value(i);
+	}
 	std::cout << "Saving result: " << dst_doc.save_file(fname.c_str()) << std::endl;
 
 	return true;
@@ -189,14 +251,13 @@ bool CFileIO::xml_read_a_section(std::string fname, const int sid, CCrossSection
 			pugi::xml_node pt_node = cs_node.first_child();
 			for (; pt_node; pt_node = pt_node.next_sibling())
 			{
-				int cnt = 3; COpenMeshT::Point pt(0, 0, 0); 
-				for (pugi::xml_attribute attr = pt_node.last_attribute();
-					attr; attr = attr.previous_attribute()) {
-					if (cnt--) {
-						std::string ss = attr.value();
-						pt[cnt] = atof(ss.c_str());
-					}
-				}
+				COpenMeshT::Point pt(0.0, 0.0, 0.0);
+				std::istringstream sx(pt_node.attribute("X").value());
+				sx >> pt[0];
+				std::istringstream sy(pt_node.attribute("Y").value());
+				sy >> pt[1];
+				std::istringstream sz(pt_node.attribute("Z").value());
+				sz >> pt[2];
 				if (strcmp(pt_node.name(), "Point") == 0)
 					cs_pts.push_back(pt);
 				else if (strcmp(pt_node.name(), "EmbPoint") == 0)
@@ -212,53 +273,6 @@ bool CFileIO::xml_read_a_section(std::string fname, const int sid, CCrossSection
 	}
 	return true;
 }
-//
-//bool CFileIO::xml_write_a_section(std::string fname, const int csid, const CCrossSection &cs)
-//{
-//	std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
-//	int root_id;
-//
-//	cs_pts = cs.GetProfPts();
-//	emb_cs_pts = cs.GetEmbProfPts();
-//	root_id = cs.GetSid();
-//
-//	pugi::xml_document dst_doc;
-//	pugi::xml_node decl = dst_doc.prepend_child(pugi::node_declaration);
-//	
-//	// heading
-//	decl.append_attribute("version") = "1.0";
-//	decl.append_attribute("encoding") = "UTF-8";
-//
-//	// 
-//	dst_doc.append_child("DUT_AutoMorpher");
-//	pugi::xml_node dst_ss = dst_doc.child("DUT_AutoMorpher");
-//	// 
-//	pugi::xml_node tmp_cs = dst_ss.append_child("Section");
-//	tmp_cs.append_attribute("ID").set_value(csid);
-//	tmp_cs.append_attribute("SPID").set_value(root_id);
-//	if (cs.IsClosed())
-//		tmp_cs.append_attribute("IsClosed").set_value("T");
-//	else
-//		tmp_cs.append_attribute("IsClosed").set_value("F");
-//	// add points
-//	for (int i = 0; i < cs_pts.size(); i++) {
-//		pugi::xml_node vertex = dst_ss.child("Section").append_child("Point");
-//		vertex.append_attribute("X").set_value(float(cs_pts[i][0]));
-//		vertex.append_attribute("Y").set_value(float(cs_pts[i][1]));
-//		vertex.append_attribute("Z").set_value(float(cs_pts[i][2]));
-//		vertex.prepend_attribute("ID").set_value(i);
-//
-//		//// check
-//		//for (pugi::xml_attribute attr = vertex.first_attribute();
-//		//	attr; attr = attr.next_attribute()) {
-//		//	std::cout << attr.name() << " " << attr.value() << ", ";
-//		//}
-//		//std::cout << std::endl;
-//	}
-//	std::cout << "Saving a Cross-section: " << dst_doc.save_file(fname.c_str()) << std::endl;
-//
-//	return true;
-//}
 
 bool CFileIO::xml_read_sections(std::string fname, std::vector<CCrossSection>& cs_list)
 {
@@ -298,14 +312,13 @@ bool CFileIO::xml_read_sections(std::string fname, std::vector<CCrossSection>& c
 		pugi::xml_node pt_node = cs_node.first_child();
 		for (; pt_node; pt_node = pt_node.next_sibling())
 		{
-			int cnt = 3; COpenMeshT::Point pt(0, 0, 0);
-			for (pugi::xml_attribute attr = pt_node.last_attribute();
-				attr; attr = attr.previous_attribute()) {
-				if (cnt--) {
-					std::string  ss = attr.value();
-					pt[cnt] = atof(ss.c_str());
-				}
-			}
+			COpenMeshT::Point pt(0.0, 0.0, 0.0);
+			std::istringstream sx(pt_node.attribute("X").value());
+			sx >> pt[0];
+			std::istringstream sy(pt_node.attribute("Y").value());
+			sy >> pt[1];
+			std::istringstream sz(pt_node.attribute("Z").value());
+			sz >> pt[2];
 			if (strcmp(pt_node.name(), "Point") == 0)
 				cs_pts.push_back(pt);
 			else if (strcmp(pt_node.name(), "EmbPoint") == 0)
@@ -630,8 +643,8 @@ SwitchType CFileIO::ini_read_config_file(const std::string fname, CFileIO::Input
 
 bool CFileIO::ini_write_config_file_to_pending(const std::string fname)
 {
-	std::ofstream out_file(fname);
-
+	std::ofstream out_file;
+	out_file.open(fname);
 	if (out_file.is_open()) {
 		out_file << "[Pending]\n";
 		out_file << "State = Pending\n";
@@ -660,7 +673,7 @@ bool CFileIO::print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
 	
 
 	// print src
-	if (!CFileIO::xml_write_skeleton(fname_src_skeleton_, s))
+	if (!CFileIO::xml_write_skeleton_polyline(fname_src_skeleton_, s))
 		return false;
 	if (!CFileIO::xml_write_sections(fname_src_cross_sections_, cs_list))
 		return false;
@@ -682,7 +695,7 @@ bool CFileIO::print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
 			}
 		}
 		// print def data
-		if (!CFileIO::xml_write_skeleton(fname_dst_skeleton_, ds))
+		if (!CFileIO::xml_write_skeleton_polyline(fname_dst_skeleton_, ds))
 			return false;
 		if (!CFileIO::xml_write_sections(fname_dst_cross_sections_, def_cross_sections))
 			return false;
