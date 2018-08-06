@@ -168,7 +168,7 @@ private:
 	//void binding_skeleton_mesh();
 	void encoding_mesh();
 	void extracting_cross_sections(std::vector<int> sid_list);
-	void extracting_single_cross_section(
+	bool extracting_single_cross_section(
 		COpenMeshT::Point c, COpenMeshT::Point d, 
 		std::vector<COpenMeshT::Point> &cs_pts, bool is_emb = false);
 	void decoding_vector_field(DenseMatrixXd & U,

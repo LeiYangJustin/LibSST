@@ -588,11 +588,13 @@ void CGeoCalculator::sample_polygon(std::vector<COpenMeshT::Point>& pts, double 
 	{
 		double t_alength = (pts[i] - pts[i + 1]).norm();
 		int cnt = 0;
-		double t = double(cnt)*ssz / t_alength;
+		double t = 0.0;
 		while (t < 1.0)
 		{
 			COpenMeshT::Point pt = pts[i] + t * (pts[i + 1] - pts[i]);
-			samples.push_back(pt);
+			if ((pt - pts[i + 1]).norm() > ssz) {
+				samples.push_back(pt);
+			}
 			cnt++;
 			t = double(cnt)*ssz / t_alength;
 		}

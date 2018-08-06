@@ -44,8 +44,8 @@ int main(int argc ,char** argv)
 	if (argc == 1)
 	{
 		std::cerr << "This is C++ testing mode with argc == 1" << std::endl;
-		path_to_cfg = "Data\\SolverLocal.ini";
-		maxIter = 3;
+		path_to_cfg = "Data\\SolverInit.ini";
+		maxIter = 1;
 		cs_spacing = 5;
 		is_testing = true;
 	}
@@ -131,7 +131,9 @@ int main(int argc ,char** argv)
 			}
 			// visualize skeleton
 			std::cout << skeleton.GetCtrlPts().size() << std::endl;
-			CFileIO::xml_write_skeleton_bezier(in_paths.path_to_src, skeleton);
+			if (skeleton.GetCtrlPts().size()) {
+				CFileIO::xml_write_skeleton_bezier(in_paths.path_to_src, skeleton);
+			}
 			// Initialization SST
 			sst_obj->SetSkeleton(skeleton);
 			sst_obj->SetMesh(p_mesh_src_obj->GetMesh());
@@ -149,7 +151,9 @@ int main(int argc ,char** argv)
 			std::string path_to_gen_cs = cCurrentPath;
 			path_to_gen_cs.append("\\src_sections.xml");
 			CFileIO::output_CS(sst_obj, path_to_gen_cs);
+
 			CFileIO::ini_write_config_file_to_pending(path_to_cfg);
+			
 			break;
 		}
 		case SwitchType::sstGlobal:

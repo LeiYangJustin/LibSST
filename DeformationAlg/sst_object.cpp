@@ -157,32 +157,33 @@ void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 		//COpenMeshT::Point tang_vec(rmf_list[sid](0, 0), rmf_list[sid](0, 1), rmf_list[sid](0, 2));
 		std::cout << "cs_extraction: " << sid << "; " << cemb << std::endl;
 		//extracting_single_cross_section(skeleton_.GetSkeletalPts()[sid], tang_vec, cs_pts);
-		extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), emb_cs_pts, true);
 
-		Vector3d skelPt(skeleton_.GetSkeletalPts()[sid][0], 
-			skeleton_.GetSkeletalPts()[sid][1], 
-			skeleton_.GetSkeletalPts()[sid][2]);
-		Vector3d cembPt(cemb[0], cemb[1], cemb[2]);
-		for (int j = 0; j < emb_cs_pts.size(); j++)
+		if (extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), emb_cs_pts, true))
 		{
-			Vector3d ept(emb_cs_pts[j][0], emb_cs_pts[j][1], emb_cs_pts[j][2]);
-			ept(0) = ept(0) - skeleton_.GetAccumArcLength()[sid];
-			Vector3d pt = rmf_list[sid].transpose() * ept + skelPt;
-			cs_pts.push_back(COpenMeshT::Point(pt(0), pt(1), pt(2)));
+			Vector3d skelPt(skeleton_.GetSkeletalPts()[sid][0],
+				skeleton_.GetSkeletalPts()[sid][1],
+				skeleton_.GetSkeletalPts()[sid][2]);
+			Vector3d cembPt(cemb[0], cemb[1], cemb[2]);
+			for (int j = 0; j < emb_cs_pts.size(); j++)
+			{
+				Vector3d ept(emb_cs_pts[j][0], emb_cs_pts[j][1], emb_cs_pts[j][2]);
+				ept(0) = ept(0) - skeleton_.GetAccumArcLength()[sid];
+				Vector3d pt = rmf_list[sid].transpose() * ept + skelPt;
+				cs_pts.push_back(COpenMeshT::Point(pt(0), pt(1), pt(2)));
+			}
+			// init cs
+			CCrossSection cs;
+			cs.SetSid(sid);
+			cs.SetProfPts(cs_pts);
+			cs.SetEmbProfPts(emb_cs_pts);
+			cs.SetClosed(false);
+			cs.SetDeformed(false);
+			map_id_cross_sections_[sid] = cs;
 		}
-
-		// init cs
-		CCrossSection cs;
-		cs.SetSid(sid);
-		cs.SetProfPts(cs_pts);
-		cs.SetEmbProfPts(emb_cs_pts);
-		cs.SetClosed(false);
-		cs.SetDeformed(false);
-		map_id_cross_sections_[sid] = cs;
 	}
 }
 
-void CSstObject::extracting_single_cross_section(COpenMeshT::Point center, 
+bool CSstObject::extracting_single_cross_section(COpenMeshT::Point center, 
 	COpenMeshT::Point normal, std::vector<COpenMeshT::Point>& cs_pts, bool is_emb)
 {
 	cs_pts.clear();
@@ -235,23 +236,32 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 	//}
 	//cspts_file.close();
 
-	////
-	//std::cout << cs_pts.size() << std::endl;
-	//std::vector<COpenMeshT::Point> test_pts;
-	////test_pts = cs_pts;
-	//CfindChainLoopUsingEMST fcl_emst_obj;
-	//fcl_emst_obj.SetPoints(cs_pts);
-	//fcl_emst_obj.Compute();
-	//fcl_emst_obj.GetSortedPoints(test_pts);
+	std::vector<COpenMeshT::Point> test_pts;
+	//test_pts = cs_pts;
+	CfindChainLoopUsingEMST fcl_emst_obj;
+	fcl_emst_obj.SetPoints(cs_pts);
+	fcl_emst_obj.Compute();
+	fcl_emst_obj.GetSortedPoints(test_pts);
 
 	//
-	bool use_sorting = true;
-	if (use_sorting) {
-		CGeoCalculator::pts_sorting_alg(cs_pts);
-		CGeoCalculator::simplify_polygon(cs_pts);
-		CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
-	}
-	//
+	std::cout << "extracted: " << cs_pts.size()
+		<< "prunned: " << cs_pts.size() << std::endl;
+	cs_pts.clear();
+	cs_pts = test_pts;
+	CGeoCalculator::simplify_polygon(cs_pts);
+
+	////
+	//bool use_sorting = true;
+	//if (use_sorting) {
+	//	if (cs_pts.size() == 0)
+	//		return false;
+
+	//	CGeoCalculator::pts_sorting_alg(cs_pts);
+	//	CGeoCalculator::simplify_polygon(cs_pts);
+	//	CGeoCalculator::sample_polygon(cs_pts, 0.01, false); 
+	//}
+	////
+	return true;
 }
 
 void CSstObject::decoding_vector_field(DenseMatrixXd & U, 
