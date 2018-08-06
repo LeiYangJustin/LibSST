@@ -11,6 +11,7 @@ class DEF_ALGCOLLE_CLASS CMeshDeformation
 {
 public:
 	CMeshDeformation();
+	CMeshDeformation(double scale);
 	~CMeshDeformation();
 
 	// This pre-computes the QR decomp and store it with a scaling metric of diag(0.1, 1, 1)

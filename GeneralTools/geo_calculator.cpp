@@ -629,54 +629,34 @@ void CGeoCalculator::reconstruct_curve_from_pointset(std::vector<COpenMeshT::Poi
 	int cntIter = 0;
 	//float tolOMT = 0.6;
 	otr2.run_under_wasserstein_tolerance(tolOMT);
-	//std::cout << "(-------------List output---------- )" << tolOMT << " " << cntIter << std::endl;
-	//do {
-	//	otr2.run_under_wasserstein_tolerance(tolOMT);
-	//	tolOMT += 0.1;
-	//} while (otr2.number_of_isolated_vertices() > 0 || cntIter++ < 10);
-
 
 	otr2.indexed_output(
 		std::back_inserter(ptss),
 		std::back_inserter(isolated_vertices),
 		std::back_inserter(edges));
 	std::cout << "(-------------List output---------- )" << tolOMT << " " << cntIter << std::endl;
-	//// points
-	//std::vector<KPoint2>::iterator pit;
-	//for (pit = ptss.begin(); pit != ptss.end(); pit++)
-	//	std::cout << *pit << std::endl;
-	//// isolated vertices
-	//std::vector<std::size_t>::iterator vit;
-	//for (vit = isolated_vertices.begin(); vit != isolated_vertices.end(); vit++)
-	//	std::cout << "1 " << *vit << std::endl;
-	//// edges
-	//std::vector<std::pair<std::size_t, std::size_t> >::iterator eit;
+	// points
+	std::vector<KPoint2>::iterator pit;
+	for (pit = ptss.begin(); pit != ptss.end(); pit++)
+		std::cout << *pit << std::endl;
+	// isolated vertices
+	std::vector<std::size_t>::iterator vit;
+	for (vit = isolated_vertices.begin(); vit != isolated_vertices.end(); vit++)
+		std::cout << "1 " << *vit << std::endl;
+	// edges
+	std::vector<std::pair<std::size_t, std::size_t> >::iterator eit;
+	for (eit = edges.begin(); eit != edges.end(); eit++)
+		std::cout << "2 " << eit->first << " " << eit->second << std::endl;
+
+	//KPoint2 orig(0.0, 0.0);
 	//for (eit = edges.begin(); eit != edges.end(); eit++)
-	//	std::cout << "2 " << eit->first << " " << eit->second << std::endl;
+	//{
+	//	KVector2 v12 = ptss[eit->second] - ptss[eit->first];
+	//	KVector2 v01 = ptss[eit->first] - orig;
+	//	double a = v01.x*v12*
+	//}
 
-	/*std::cout << ptss.size() << ", " << isolated_vertices.size() << std::endl;
-	std::ofstream out_file("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\fDataRepo\\CSData\\dst_cs.xy");
-	if (out_file.is_open())
-	{
-		std::vector<KPoint2>::iterator pit;
-		for (pit = ptss.begin(); pit != ptss.end(); pit++)
-			out_file << "v " << *pit << std::endl;
-		std::vector<std::pair<std::size_t, std::size_t> >::iterator eit;
-		for (eit = edges.begin(); eit != edges.end(); eit++)
-			out_file << "e " << eit->first << " " << eit->second << std::endl;
-	}
-	out_file.close();
 
-	std::ofstream out_src_file("E:\\Research\\SSTsystem\\LibSST\\MainPrj\\fDataRepo\\CSData\\src_cs.txt");
-	if (out_src_file.is_open())
-	{
-		std::vector<KPoint2>::iterator pit;
-		for (pit = points.begin(); pit != points.end(); pit++)
-			out_src_file << *pit << std::endl;
-	}
-	out_src_file.close();*/
-
-	// sorting the points and connect them if necessary
-	// cs8, cs10
+	
 
 }

@@ -1,6 +1,7 @@
 #include "sst_object.h"
 #include "../GeneralTools/geo_calculator.h"
-//#include "../GeneralTools/sorting_2d_pts.h"
+#include "../GeneralTools/euclidean_MST.h"
+//#include "../GeneralTools/ransac_wrapper.h"
 
 void CSstObject::LocalDeformSetup()
 {
@@ -106,6 +107,7 @@ bool CSstObject::GlobalDeformSolve()
 			return false;
 		}
 	}
+	return false;
 }
 
 void CSstObject::encoding_mesh()
@@ -152,7 +154,7 @@ void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 		int sid = sid_list[i];
 		COpenMeshT::Point cemb(skeleton_.GetAccumArcLength()[sid], 0.0, 0.0);
 		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
-		COpenMeshT::Point tang_vec(rmf_list[sid](0, 0), rmf_list[sid](0, 1), rmf_list[sid](0, 2));
+		//COpenMeshT::Point tang_vec(rmf_list[sid](0, 0), rmf_list[sid](0, 1), rmf_list[sid](0, 2));
 		std::cout << "cs_extraction: " << sid << "; " << cemb << std::endl;
 		//extracting_single_cross_section(skeleton_.GetSkeletalPts()[sid], tang_vec, cs_pts);
 		extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), emb_cs_pts, true);
@@ -227,21 +229,29 @@ void CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 		}
 	}
 
-	// try CGAL::Optimal Transportation Curve Reconstruction
-	// sorting the vertices
-	//CGeoCalculator::reconstruct_curve_from_pointset(cs_pts);
+	//std::ofstream cspts_file("cspts.txt");
+	//for (int i = 0; i < cs_pts.size(); i++) {
+	//	cspts_file << cs_pts[i] << std::endl;
+	//}
+	//cspts_file.close();
 
+	////
+	//std::cout << cs_pts.size() << std::endl;
+	//std::vector<COpenMeshT::Point> test_pts;
+	////test_pts = cs_pts;
+	//CfindChainLoopUsingEMST fcl_emst_obj;
+	//fcl_emst_obj.SetPoints(cs_pts);
+	//fcl_emst_obj.Compute();
+	//fcl_emst_obj.GetSortedPoints(test_pts);
+
+	//
 	bool use_sorting = true;
 	if (use_sorting) {
 		CGeoCalculator::pts_sorting_alg(cs_pts);
 		CGeoCalculator::simplify_polygon(cs_pts);
 		CGeoCalculator::sample_polygon(cs_pts, 0.01, true);
-		/*if (has_global_deformation_)
-			CGeoCalculator::sample_polygon(cs_pts, 0.02, true);
-		else
-			CGeoCalculator::sample_polygon(cs_pts, 0.01, true);*/
-		//std::cout << cs_pts.size() << std::endl;
 	}
+	//
 }
 
 void CSstObject::decoding_vector_field(DenseMatrixXd & U, 
@@ -325,4 +335,23 @@ void CSstObject::ResetCrossSectionsAfterDeformation()
 {
 	for (auto miter = map_id_cross_sections_.begin(); miter != map_id_cross_sections_.end(); ++miter)
 		miter->second.SetDeformed(false);
+}
+
+// 
+void CSstObject::InsertCrossSections(std::vector<int> spid_list)
+{
+	// add to map
+	extracting_cross_sections(spid_list);
+}
+
+void CSstObject::DeleteCrossSections(std::vector<int> spid_list)
+{
+	// remove from map
+	for (int i = 0; i < spid_list.size(); i++)
+	{
+		if (map_id_cross_sections_.find(spid_list[i]) != map_id_cross_sections_.end())
+		{
+			map_id_cross_sections_.erase(spid_list[i]);
+		}
+	}
 }

@@ -8,7 +8,7 @@
 #include "../DeformationAlg/skeleton_object.h"
 #include "../DeformationAlg/sst_object.h"
 
-enum SwitchType { sstInit, sstUpdate, sstGlobal, sstLocal, sstPending, sstExit};
+enum SwitchType { sstInit, sstUpdateCS, sstGlobal, sstLocal, sstPending, sstExit};
 
 class CFileIO
 {
@@ -38,11 +38,6 @@ public:
 
 	static SwitchType read_config_file(std::string fname);
 
-	static bool read_local_def_cs_id_from_config_file(std::string fname, std::vector<int> &cs_ids);
-	static bool read_cross_section_pts(std::string fname, std::vector<COpenMeshT::Point> &cs_pts);
-	static bool read_skeleton(std::string fname, CSkeleton &s);
-
-
 	static bool xml_read_skeleton(std::string fname, CSkeleton &s);
 	static bool xml_write_skeleton_polyline(std::string fname, const CSkeleton &s);
 	static bool xml_write_skeleton_bezier(std::string fname, const CSkeleton &s);
@@ -63,8 +58,8 @@ public:
 	static bool write_mesh(std::string fname, COpenMeshT &mesh, bool is_emb = false);
 	static bool write_mesh_to_stl(std::string fname, COpenMeshT &mesh, bool is_emb = false);
 
-	static bool print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths);
-	static bool print_CS(CSstObject* sst, std::string fname);
+	static bool output_SST(CSstObject* sst, CFileIO::OutputPaths out_paths);
+	static bool output_CS(CSstObject* sst, std::string fname);
 	static void set_output_path(std::string path, CFileIO::OutputPaths &output_paths);
 
 };

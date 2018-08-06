@@ -151,15 +151,25 @@
   <ItemGroup>
     <ClCompile Include="fe_meshIO.cpp" />
     <ClCompile Include="geo_calculator.cpp" />
-    <ClCompile Include="sorting_2d_pts.cpp" />
+    <ClCompile Include="rtl\fitting_curve_using_bspline.cpp" />
     <ClCompile Include="visibility_graph.cpp" />
+    <ClCompile Include="euclidean_MST.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cgal_predef.h" />
+    <ClInclude Include="euclidean_MST.h" />
     <ClInclude Include="fe_meshIO.h" />
     <ClInclude Include="geo_calculator.h" />
     <ClInclude Include="general_tool_prereq.h" />
-    <ClInclude Include="sorting_2d_pts.h" />
+    <ClInclude Include="rtl\Base.hpp" />
+    <ClInclude Include="rtl\Evaluator.hpp" />
+    <ClInclude Include="rtl\fitting_curve_using_bspline.h" />
+    <ClInclude Include="rtl\Line.hpp" />
+    <ClInclude Include="rtl\LMedS.hpp" />
+    <ClInclude Include="rtl\MLESAC.hpp" />
+    <ClInclude Include="rtl\MSAC.hpp" />
+    <ClInclude Include="rtl\RANSAC.hpp" />
+    <ClInclude Include="rtl\RTL.hpp" />
     <ClInclude Include="visibility_graph.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

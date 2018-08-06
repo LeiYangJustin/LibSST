@@ -29,7 +29,8 @@ void CSSTDeformer::LocalDeformationSetUp(
 		std::pair<int, int> cs_pair(cs_list[i].GetSid(), cs_list[i + 1].GetSid());
 		// new deformer
 		if (p_deformer_map_.find(cs_pair) == p_deformer_map_.end()) {
-			CMeshDeformation* p_deformer = new CMeshDeformation;
+			// set scaling ratio
+			CMeshDeformation* p_deformer = new CMeshDeformation(0.01);
 			// compute
 			get_deformer(left_cs_pts, right_cs_pts, p_deformer);
 			p_deformer_map_[cs_pair] = p_deformer;

@@ -4,9 +4,12 @@
 CMeshDeformation::CMeshDeformation()
 {
 	S_.setIdentity();
-	S_(0, 0) = 0.01; // scaling
 }
-
+CMeshDeformation::CMeshDeformation(double scale)
+{
+	S_.setIdentity();
+	S_(0, 0) = scale; // scaling
+}
 
 CMeshDeformation::~CMeshDeformation()
 {

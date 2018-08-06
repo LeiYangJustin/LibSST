@@ -24,8 +24,8 @@ SwitchType CFileIO::read_config_file(std::string fname)
 	else if (strcmp(line.c_str(), "PENDING") == 0) {
 		return  SwitchType::sstPending; // pending
 	}
-	else if (strcmp(line.c_str(), "UPDATE") == 0) {
-		return  SwitchType::sstUpdate; // pending
+	else if (strcmp(line.c_str(), "UPDATECS") == 0) {
+		return  SwitchType::sstUpdateCS; // pending
 	}
 	else if (strcmp(line.c_str(), "INIT") == 0) {
 		return  SwitchType::sstInit; // pending
@@ -33,64 +33,6 @@ SwitchType CFileIO::read_config_file(std::string fname)
 	else {
 		return SwitchType::sstExit; // exit
 	}
-}
-
-bool CFileIO::read_local_def_cs_id_from_config_file(std::string fname, std::vector<int> &cs_ids)
-{
-	std::ifstream in_file(fname);
-	if (!in_file.is_open())
-	{
-		std::cerr << "Failed to open the config_switch file" << std::endl;
-		return false;
-	}
-	std::string line;
-	std::getline(in_file, line);
-	std::getline(in_file, line);
-	std::istringstream ss(line);
-	// coord
-	while(ss.good())
-	{
-		int a;
-		ss >> a;
-		cs_ids.push_back(a);
-	}
-	in_file.close();
-	return true;
-}
-
-bool CFileIO::read_cross_section_pts(std::string fname, std::vector<COpenMeshT::Point>& cs_pts)
-{
-	std::ifstream in_file(fname);
-	if (!in_file.is_open())
-	{
-		std::cerr << "Failed to open the CS file" << std::endl;
-		return false;
-	}
-	std::string line;
-	while (std::getline(in_file, line)) {
-		std::istringstream ss(line);
-		// coord
-		COpenMeshT::Point pt(0.0, 0.0, 0.0);
-		for (int i = 0; i < 3; i++)
-		{
-			double a;
-			ss >> a;
-			pt[i] = a;
-		}
-		cs_pts.push_back(pt);
-	};
-	in_file.close();
-	return true;
-}
-
-bool CFileIO::read_skeleton(std::string fname, CSkeleton &s)
-{
-	CCurveObject* p_def_skeleton = new CCurveObject;
-	CDataIO::ReadCurve(fname, *p_def_skeleton);
-	CSkeleton s_tmp(p_def_skeleton->GetCurve());
-	s.CopyFrom(s_tmp);
-
-	return true;
 }
 
 bool CFileIO::xml_read_skeleton(std::string fname, CSkeleton & s)
@@ -134,7 +76,7 @@ bool CFileIO::xml_read_skeleton(std::string fname, CSkeleton & s)
 		is_bezier = true;
 		std::cout << "bezier true" << std::endl;
 	}
-	if (is_bezier && ts.size() == 0) {
+	if (is_bezier/* && ts.size() == 0*/) {
 		std::cout << ctrlPts.size() << std::endl;
 		int numSamples = 100;
 		CSkeleton tmp_s(ctrlPts, numSamples);
@@ -497,99 +439,99 @@ bool CFileIO::write_mesh_to_stl(std::string fname, COpenMeshT & mesh, bool is_em
 //	return false;
 //}
 
-SwitchType CFileIO::xml_read_config_file(const std::string fname, CFileIO::InputPaths &in_paths)
-{
-	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(fname.c_str());
-	if (!result)
-	{
-		std::cout << fname << std::endl;
-		std::cerr << "Error at CFileIO::xml_read_config_file()" << std::endl;
-		return SwitchType::sstExit;
-	}
-
-	// data folder
-	pugi::xml_node folder_node = doc.child("DUT_AutoMorpher").child("DataFolder");
-	std::string data_path = folder_node.attribute("Path").value();
-
-	// mesh 
-	pugi::xml_node mesh_node = doc.child("DUT_AutoMorpher").child("Mesh");
-	std::string mesh_path = mesh_node.attribute("Path").value();
-
-	// solver
-	pugi::xml_node solver_node = doc.child("DUT_AutoMorpher").child("Solver");
-	std::string solver_type = solver_node.attribute("Type").value();
-
-	// output 
-	pugi::xml_node output_node = doc.child("DUT_AutoMorpher").child("Mesh");
-	std::string output_path = output_node.attribute("Path").value();
-
-	// set paths and output
-	if (strcmp(solver_type.c_str(), "Init") == 0)
-	{
-		std::string src_skel_path = solver_node.child("Src").attribute("Path").value();
-
-		std::cout << "SolverType: " << "Initilization" << std::endl;
-		std::cout << "MeshInPath: " << mesh_path << std::endl;
-		std::cout << "SrcPath: " << src_skel_path << std::endl;
-		
-		// set path
-		in_paths.path_to_config_in = fname;
-		in_paths.path_to_mesh_in = mesh_path;
-		in_paths.path_to_src = src_skel_path;
-
-		return SwitchType::sstInit;
-	}
-	else if (strcmp(solver_type.c_str(), "Pending") == 0)
-	{
-		return SwitchType::sstPending;
-	}
-	else if (strcmp(solver_type.c_str(), "Update") == 0)
-	{
-		std::cerr << "sstUpdate is not ready to use" << std::endl;
-		return SwitchType::sstUpdate;
-	}
-	else if (strcmp(solver_type.c_str(), "Global") == 0)
-	{
-		std::string src_skel_path, dst_skel_path;
-		src_skel_path = solver_node.child("Src").attribute("Path").value();
-		dst_skel_path = solver_node.child("Dst").attribute("Path").value();
-		std::cout << "SolverType: " << "Global" << std::endl;
-		std::cout << "MeshInPath: " << mesh_path << std::endl;
-		std::cout << "SrcPath: " << src_skel_path << std::endl;
-		std::cout << "DstPath: " << dst_skel_path << std::endl;
-
-		// set path
-		in_paths.path_to_config_in = fname;
-		in_paths.path_to_mesh_in = mesh_path;
-		in_paths.path_to_src = src_skel_path;
-		in_paths.path_to_dst = dst_skel_path;
-
-		return SwitchType::sstGlobal;
-	}
-	else if (strcmp(solver_type.c_str(), "Local") == 0)
-	{
-		std::string src_cs_path, dst_cs_path;
-		src_cs_path = solver_node.child("Src").attribute("Path").value();
-		dst_cs_path = solver_node.child("Dst").attribute("Path").value();
-		std::cout << "SolverType: " << "Local" << std::endl;
-		std::cout << "MeshInPath: " << mesh_path << std::endl;
-		std::cout << "SrcPath: " << src_cs_path << std::endl;
-		std::cout << "DstPath: " << dst_cs_path << std::endl;
-
-		// set path
-		in_paths.path_to_config_in = fname;
-		in_paths.path_to_mesh_in = mesh_path;
-		in_paths.path_to_src = src_cs_path;
-		in_paths.path_to_dst = dst_cs_path;
-
-		return SwitchType::sstLocal;
-	}
-	else
-	{
-		return SwitchType::sstExit;
-	}
-}
+//SwitchType CFileIO::xml_read_config_file(const std::string fname, CFileIO::InputPaths &in_paths)
+//{
+//	pugi::xml_document doc;
+//	pugi::xml_parse_result result = doc.load_file(fname.c_str());
+//	if (!result)
+//	{
+//		std::cout << fname << std::endl;
+//		std::cerr << "Error at CFileIO::xml_read_config_file()" << std::endl;
+//		return SwitchType::sstExit;
+//	}
+//
+//	// data folder
+//	pugi::xml_node folder_node = doc.child("DUT_AutoMorpher").child("DataFolder");
+//	std::string data_path = folder_node.attribute("Path").value();
+//
+//	// mesh 
+//	pugi::xml_node mesh_node = doc.child("DUT_AutoMorpher").child("Mesh");
+//	std::string mesh_path = mesh_node.attribute("Path").value();
+//
+//	// solver
+//	pugi::xml_node solver_node = doc.child("DUT_AutoMorpher").child("Solver");
+//	std::string solver_type = solver_node.attribute("Type").value();
+//
+//	// output 
+//	pugi::xml_node output_node = doc.child("DUT_AutoMorpher").child("Mesh");
+//	std::string output_path = output_node.attribute("Path").value();
+//
+//	// set paths and output
+//	if (strcmp(solver_type.c_str(), "Init") == 0)
+//	{
+//		std::string src_skel_path = solver_node.child("Src").attribute("Path").value();
+//
+//		std::cout << "SolverType: " << "Initilization" << std::endl;
+//		std::cout << "MeshInPath: " << mesh_path << std::endl;
+//		std::cout << "SrcPath: " << src_skel_path << std::endl;
+//		
+//		// set path
+//		in_paths.path_to_config_in = fname;
+//		in_paths.path_to_mesh_in = mesh_path;
+//		in_paths.path_to_src = src_skel_path;
+//
+//		return SwitchType::sstInit;
+//	}
+//	else if (strcmp(solver_type.c_str(), "Pending") == 0)
+//	{
+//		return SwitchType::sstPending;
+//	}
+//	else if (strcmp(solver_type.c_str(), "UpdateCS") == 0)
+//	{
+//		std::cerr << "sstUpdate is not ready to use" << std::endl;
+//		return SwitchType::sstUpdateCS;
+//	}
+//	else if (strcmp(solver_type.c_str(), "Global") == 0)
+//	{
+//		std::string src_skel_path, dst_skel_path;
+//		src_skel_path = solver_node.child("Src").attribute("Path").value();
+//		dst_skel_path = solver_node.child("Dst").attribute("Path").value();
+//		std::cout << "SolverType: " << "Global" << std::endl;
+//		std::cout << "MeshInPath: " << mesh_path << std::endl;
+//		std::cout << "SrcPath: " << src_skel_path << std::endl;
+//		std::cout << "DstPath: " << dst_skel_path << std::endl;
+//
+//		// set path
+//		in_paths.path_to_config_in = fname;
+//		in_paths.path_to_mesh_in = mesh_path;
+//		in_paths.path_to_src = src_skel_path;
+//		in_paths.path_to_dst = dst_skel_path;
+//
+//		return SwitchType::sstGlobal;
+//	}
+//	else if (strcmp(solver_type.c_str(), "Local") == 0)
+//	{
+//		std::string src_cs_path, dst_cs_path;
+//		src_cs_path = solver_node.child("Src").attribute("Path").value();
+//		dst_cs_path = solver_node.child("Dst").attribute("Path").value();
+//		std::cout << "SolverType: " << "Local" << std::endl;
+//		std::cout << "MeshInPath: " << mesh_path << std::endl;
+//		std::cout << "SrcPath: " << src_cs_path << std::endl;
+//		std::cout << "DstPath: " << dst_cs_path << std::endl;
+//
+//		// set path
+//		in_paths.path_to_config_in = fname;
+//		in_paths.path_to_mesh_in = mesh_path;
+//		in_paths.path_to_src = src_cs_path;
+//		in_paths.path_to_dst = dst_cs_path;
+//
+//		return SwitchType::sstLocal;
+//	}
+//	else
+//	{
+//		return SwitchType::sstExit;
+//	}
+//}
 
 SwitchType CFileIO::ini_read_config_file(const std::string fname, CFileIO::InputPaths & in_paths)
 {
@@ -610,6 +552,17 @@ SwitchType CFileIO::ini_read_config_file(const std::string fname, CFileIO::Input
 		in_paths.path_to_src = topLevel("Init")["SrcPath"];
 		
 		return SwitchType::sstInit;
+	}
+	else if (topLevel("UpdateCS").depth)
+	{
+		std::cout << "State: " << topLevel("UpdateCS")["State"] << std::endl;
+
+		in_paths.path_to_config_in = fname;
+		in_paths.path_to_mesh_in = topLevel("UpdateCS")["Mesh"];
+		in_paths.path_to_outfolder = topLevel("UpdateCS")["OutputFolder"];
+		in_paths.path_to_src = topLevel("UpdateCS")["SrcPath"];
+
+		return SwitchType::sstUpdateCS;
 	}
 	else if (topLevel("Global").depth)
 	{
@@ -655,7 +608,7 @@ bool CFileIO::ini_write_config_file_to_pending(const std::string fname)
 	return false;
 }
 
-bool CFileIO::print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
+bool CFileIO::output_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
 {
 	// get path
 	std::string fname_src_skeleton_ = out_paths.path_to_src_skel;
@@ -707,7 +660,7 @@ bool CFileIO::print_SST(CSstObject* sst, CFileIO::OutputPaths out_paths)
 
 	return true;
 }
-bool CFileIO::print_CS(CSstObject * sst, std::string fname)
+bool CFileIO::output_CS(CSstObject * sst, std::string fname)
 {
 	std::vector<CCrossSection> cs_list;
 	sst->GetCrossSections(cs_list);

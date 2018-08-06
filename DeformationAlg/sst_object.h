@@ -85,10 +85,8 @@ public:
 		}
 	}
 	// 
-	void InsertCrossSections(std::vector<int> sid_list)
-	{
-		std::cout << "insert cross sections function is under construction" << std::endl;
-	}
+	void InsertCrossSections(std::vector<int> spid_list);
+	void DeleteCrossSections(std::vector<int> spid_list);
 
 	// 
 	bool IsDeformed()

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="rtl">
+      <UniqueIdentifier>{4da0fa91-7bbc-477e-96fd-8e5d92cb888b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="geo_calculator.cpp">
@@ -24,8 +27,11 @@
     <ClCompile Include="visibility_graph.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sorting_2d_pts.cpp">
+    <ClCompile Include="euclidean_MST.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rtl\fitting_curve_using_bspline.cpp">
+      <Filter>rtl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -44,8 +50,35 @@
     <ClInclude Include="visibility_graph.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="sorting_2d_pts.h">
+    <ClInclude Include="euclidean_MST.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\Base.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\Evaluator.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\Line.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\LMedS.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\MLESAC.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\MSAC.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\RANSAC.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\RTL.hpp">
+      <Filter>rtl</Filter>
+    </ClInclude>
+    <ClInclude Include="rtl\fitting_curve_using_bspline.h">
+      <Filter>rtl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
