@@ -172,8 +172,12 @@ void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 				cs_pts.push_back(COpenMeshT::Point(pt(0), pt(1), pt(2)));
 			}
 			// init cs
+
+			std::vector<double> tparas;
+			CGeoCalculator::sample_polygon_parameters(tparas, cs_pts, 0.01, false);
 			CCrossSection cs;
 			cs.SetSid(sid);
+			cs.SetParameters(tparas);
 			cs.SetProfPts(cs_pts);
 			cs.SetEmbProfPts(emb_cs_pts);
 			cs.SetClosed(false);

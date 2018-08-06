@@ -15,6 +15,7 @@ public:
 		prof_pts_ = b.GetProfPts();
 		emb_prof_pts_ = b.GetEmbProfPts();
 		def_emb_prof_pts_ = b.GetDefEmbProfPts();
+		parameters_ = b.GetParameters();
 		skel_id_ = b.GetSid();
 		is_closed_ = b.IsClosed();
 		is_deformed_ = b.IsDeformed();
@@ -23,9 +24,18 @@ public:
 	void CopyFrom(const CCrossSection &b) {
 		prof_pts_ = b.GetProfPts();
 		emb_prof_pts_ = b.GetEmbProfPts();
+		parameters_ = b.GetParameters();
 		skel_id_ = b.GetSid();
 		is_closed_ = b.IsClosed();
 	}
+
+	//
+	void SetParameters(const std::vector<double> right) {
+		parameters_ = right;
+	};
+	std::vector<double> GetParameters() const {
+		return parameters_;
+	};
 
 	void SetProfPts(const std::vector<COpenMeshT::Point> right) {
 		prof_pts_ = right;
@@ -80,14 +90,15 @@ private:
 	std::vector<COpenMeshT::Point> prof_pts_;
 	std::vector<COpenMeshT::Point> emb_prof_pts_;
 	std::vector<COpenMeshT::Point> def_emb_prof_pts_;
+	std::vector<double> parameters_;
 	int skel_id_;
 	//COpenMeshT::Point normal_;
 	bool is_closed_;
 	bool is_deformed_;
 
-private:
-	void update_prof_pts_with_new_emb_prof_pts();
-	void update_emb_prof_pts_with_new_prof_pts();
+//private:
+//	void update_prof_pts_with_new_emb_prof_pts();
+//	void update_emb_prof_pts_with_new_prof_pts();
 };
 
 class DEF_ALGCOLLE_CLASS CSkeleton

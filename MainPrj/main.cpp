@@ -151,9 +151,7 @@ int main(int argc ,char** argv)
 			std::string path_to_gen_cs = cCurrentPath;
 			path_to_gen_cs.append("\\src_sections.xml");
 			CFileIO::output_CS(sst_obj, path_to_gen_cs);
-
 			CFileIO::ini_write_config_file_to_pending(path_to_cfg);
-			
 			break;
 		}
 		case SwitchType::sstGlobal:

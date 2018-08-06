@@ -124,7 +124,13 @@ void CSSTDeformer::GlobalDeformationSetup(std::vector<CCrossSection> cs_list)
 		std::vector<COpenMeshT::Point> all_cs_pts;
 		for (int i = 0; i < cs_list.size(); i++) {
 			std::vector<COpenMeshT::Point> cs_pts = cs_list[i].GetProfPts();
-			all_cs_pts.insert(all_cs_pts.end(), cs_pts.begin(), cs_pts.end());
+			//
+			std::vector<COpenMeshT::Point> cs_samples;
+			std::vector<double> ts = cs_list[i].GetParameters();
+			CGeoCalculator::sample_polygon_with_parameters(ts, cs_pts, cs_samples, cs_list[i].IsClosed());
+			all_cs_pts.insert(all_cs_pts.end(), cs_samples.begin(), cs_samples.end());
+			//
+			//all_cs_pts.insert(all_cs_pts.end(), cs_pts.begin(), cs_pts.end());
 		}
 		get_deformer(all_cs_pts, p_deformer);
 		p_deformer_map_[cs_pair] = p_deformer;
@@ -142,8 +148,17 @@ bool CSSTDeformer::GlobalDeformationSolve(
 		std::vector<COpenMeshT::Point> cs_pts = def_cs_list[i].GetProfPts();
 		std::vector<COpenMeshT::Point> def_cs_pts = def_cs_list[i].GetDefEmbProfPts();
 
-		all_cs_pts.insert(all_cs_pts.end(), cs_pts.begin(), cs_pts.end());
-		all_def_cs_pts.insert(all_def_cs_pts.end(), def_cs_pts.begin(), def_cs_pts.end());
+		//
+		std::vector<COpenMeshT::Point> cs_samples, def_cs_samples;
+		std::vector<double> ts = def_cs_list[i].GetParameters();
+		CGeoCalculator::sample_polygon_with_parameters(ts, cs_pts, cs_samples, def_cs_list[i].IsClosed());
+		CGeoCalculator::sample_polygon_with_parameters(ts, def_cs_pts, def_cs_samples, def_cs_list[i].IsClosed());
+		all_cs_pts.insert(all_cs_pts.end(), cs_samples.begin(), cs_samples.end());
+		all_def_cs_pts.insert(all_def_cs_pts.end(), def_cs_samples.begin(), def_cs_samples.end());
+		//
+
+		//all_cs_pts.insert(all_cs_pts.end(), cs_pts.begin(), cs_pts.end());
+		//all_def_cs_pts.insert(all_def_cs_pts.end(), def_cs_pts.begin(), def_cs_pts.end());
 	}
 	// check
 	if (all_cs_pts.size() != all_def_cs_pts.size()) {

@@ -64,8 +64,19 @@ public:
 	static void pts_sorting_alg(std::vector<COpenMeshT::Point> &pts);
 	static void simplify_polygon(std::vector<COpenMeshT::Point> &pts, double dT = 0.5);
 	static void reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts, float tolOMT=1.0);
+	
 	// spacing = a percentage of step size over total length
 	static void sample_polygon(std::vector<COpenMeshT::Point> &pts, double spacing, bool is_closed);
+	
+	static void sample_polygon_parameters(
+		std::vector<double> &tparas, const std::vector<COpenMeshT::Point> pts, 
+		double spacing, bool is_closed);
+
+	static void sample_polygon_with_parameters(
+		std::vector<double> tparas,
+		std::vector<COpenMeshT::Point> cs_pts, 
+		std::vector<COpenMeshT::Point> &out_pts, 
+		bool is_closed);
 };
 
 #endif // !C_GEO_CALCULATOR_H

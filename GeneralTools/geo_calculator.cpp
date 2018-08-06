@@ -605,6 +605,60 @@ void CGeoCalculator::sample_polygon(std::vector<COpenMeshT::Point>& pts, double 
 	pts = samples;
 }
 
+void CGeoCalculator::sample_polygon_parameters(std::vector<double> &tparas, 
+	const std::vector<COpenMeshT::Point> pts, double spacing, bool is_closed)
+{
+	tparas.clear();
+	std::vector<COpenMeshT::Point> in_pts;
+	if (is_closed)
+		in_pts.push_back(pts.front());
+
+	// step size = ssz
+	double alength = 0.0;
+	for (int i = 0; i < pts.size() - 1; i++)
+	{
+		alength += (pts[i] - pts[i + 1]).norm();
+	}
+	double ssz = alength*spacing;
+
+	// sample
+	for (int i = 0; i < pts.size() - 1; i++)
+	{
+		double t_alength = (pts[i] - pts[i + 1]).norm();
+		int cnt = 0;
+		double t = 0.0;
+		while (t < 1.0)
+		{
+			COpenMeshT::Point pt = pts[i] + t * (pts[i + 1] - pts[i]);
+			if ((pt - pts[i + 1]).norm() > ssz) {
+				tparas.push_back(t);
+			}
+			cnt++;
+			t = double(cnt)*ssz / t_alength;
+		}
+	}
+	//tparas.push_back(1.0);
+}
+
+void CGeoCalculator::sample_polygon_with_parameters(std::vector<double> tparas,
+	std::vector<COpenMeshT::Point> cs_pts, std::vector<COpenMeshT::Point> &out_pts, bool is_closed)
+{
+	//
+	out_pts.clear();
+	if (is_closed)
+		cs_pts.push_back(cs_pts.front());
+
+	// sample
+	int pid = 0;
+	for (int i = 0; i < tparas.size(); i++)
+	{
+		double t = tparas[i];
+		if (t == 0.0 && pid > 0) pid++;
+		COpenMeshT::Point pt = cs_pts[pid] + t * (cs_pts[pid + 1] - cs_pts[pid]);
+		out_pts.push_back(pt);
+	}
+}
+
 void CGeoCalculator::reconstruct_curve_from_pointset(std::vector<COpenMeshT::Point> &pts, float tolOMT)
 {
 	typedef CGAL::Optimal_transportation_reconstruction_2<K>    Otr_2;
