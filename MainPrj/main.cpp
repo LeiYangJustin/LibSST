@@ -41,24 +41,22 @@ int main(int argc ,char** argv)
 	std::string path_to_cfg;
 	bool is_testing = false;
 	SwitchType solver_state = SwitchType::sstPending;
+	cs_spacing = 5;
 	if (argc == 1)
 	{
 		std::cerr << "This is C++ testing mode with argc == 1" << std::endl;
-		path_to_cfg = "Data\\SolverInit.ini";
+		path_to_cfg = "Data\\SolverGlobal.ini";
 		maxIter = 1;
-		cs_spacing = 5;
 		is_testing = true;
 	}
 	else if (argc == 2)
 	{
 		path_to_cfg = argv[1];
 		maxIter = 10000;
-		cs_spacing = 5;
 	}
 	else if (argc == 3) {
 		path_to_cfg = argv[1];
 		maxIter = atoi(argv[2]);
-		cs_spacing = 5;
 	}
 	else {
 		return 0;
@@ -71,8 +69,15 @@ int main(int argc ,char** argv)
 		// step 1: read the config file and update the two global switchs
 		CFileIO::InputPaths in_paths;
 		solver_state = CFileIO::ini_read_config_file(path_to_cfg, in_paths);
+		std::string path_to_src_mesh = cCurrentPath;
+		path_to_src_mesh.append("\\src_mesh.stl");
 		std::string path_to_gen_mesh = cCurrentPath;
 		path_to_gen_mesh.append("\\gen_mesh.stl");
+
+		std::string path_to_src_mesh_txt = cCurrentPath;
+		std::string path_to_gen_mesh_txt = cCurrentPath;
+		path_to_src_mesh_txt.append("\\src_mesh_txt.txt");
+		path_to_gen_mesh_txt.append("\\gen_mesh_txt.txt");
 
 		// exit when all switches are off
 		switch (solver_state)
@@ -147,11 +152,15 @@ int main(int argc ,char** argv)
 			}
 			sst_obj->InitCrossSections(sid_list);
 			// output
-			std::cout << "Initialization done" << std::endl;
 			std::string path_to_gen_cs = cCurrentPath;
+			std::cout << cCurrentPath << std::endl;
 			path_to_gen_cs.append("\\src_sections.xml");
 			CFileIO::output_CS(sst_obj, path_to_gen_cs);
-			CFileIO::ini_write_config_file_to_pending(path_to_cfg);
+			std::cout << "Initialization done" << std::endl;
+			if (is_testing)
+				return 0;
+			else
+				CFileIO::ini_write_config_file_to_pending(path_to_cfg);
 			break;
 		}
 		case SwitchType::sstGlobal:
@@ -210,12 +219,25 @@ int main(int argc ,char** argv)
 			sst_obj->GlobalDeformSetup();
 			sst_obj->GlobalDeformSolve();
 			// output
-			COpenMeshT def_mesh;
+			COpenMeshT def_mesh, src_mesh;
 			if (sst_obj->OutputDefMesh(def_mesh))
 			{
-				CFileIO::write_mesh_to_stl(path_to_gen_mesh, def_mesh);
-				std::cout << "Global deformation done" << std::endl;
+				//src_mesh = sst_obj->GetMesh();
+				//CFileIO::write_mesh_to_stl(path_to_src_mesh, src_mesh, false);
+				CFileIO::write_mesh_to_stl(path_to_gen_mesh, def_mesh, false);
+
+				//std::cerr << "# in the original mesh: " << src_mesh.n_vertices() << std::endl;
+				//std::cerr << "# in the deformed mesh: " << def_mesh.n_vertices() << std::endl;
+
 				std::cout << "Gen_Mesh output to path: " << path_to_gen_mesh << std::endl;
+				std::cout << "Global deformation done" << std::endl;
+				
+				//CFileIO::write_mesh_to_obj(path_to_src_mesh_txt, src_mesh);
+				//CFileIO::write_mesh_to_obj(path_to_gen_mesh_txt, def_mesh);
+
+				//CFileIO::write_mesh(path_to_src_mesh_txt, src_mesh);
+				//CFileIO::write_mesh(path_to_gen_mesh_txt, def_mesh);
+
 				if (is_testing)
 					return 0;
 				else
@@ -239,7 +261,7 @@ int main(int argc ,char** argv)
 				}
 				// read skeleton
 				CSkeleton skeleton;
-				std::string skel_fname = "Data\\src_ctrl_skeleton.xml";
+				std::string skel_fname = "Data\\sf\\src_ctrl_skeleton.xml";
 				if (!CFileIO::xml_read_skeleton(skel_fname, skeleton)) {
 					std::cerr << "Path to the input skeleton cannot be found!\n";
 					return 0;
@@ -291,12 +313,19 @@ int main(int argc ,char** argv)
 			sst_obj->LocalDeformSetup();
 			sst_obj->LocalDeformSolve();
 
-			COpenMeshT def_mesh;
+			COpenMeshT def_mesh, src_mesh;
 			if (sst_obj->OutputDefMesh(def_mesh))
 			{
+				//src_mesh = sst_obj->GetMesh();
+				//CFileIO::write_mesh_to_stl(path_to_src_mesh, src_mesh, false);
 				CFileIO::write_mesh_to_stl(path_to_gen_mesh, def_mesh, false);
-				std::cerr << "Local deformation done" << std::endl;
 				std::cerr << "Gen_Mesh output to path: " << path_to_gen_mesh << std::endl;
+				std::cerr << "Local deformation done" << std::endl;
+
+				
+				//CFileIO::write_mesh(path_to_src_mesh_txt, src_mesh);
+				//CFileIO::write_mesh(path_to_gen_mesh_txt, def_mesh);
+
 				if (is_testing)
 					return 0;
 				else

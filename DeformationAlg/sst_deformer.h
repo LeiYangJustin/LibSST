@@ -29,6 +29,9 @@ public:
 		const std::vector<CCrossSection> def_cs_list,
 		COpenMeshT *mesh,
 		COpenMeshT *def_mesh);
+	bool LocalDeformationSolve(COpenMeshT *mesh,
+		const std::vector<CCrossSection> def_cs_list,
+		std::map<int, COpenMeshT::Point> &map_id_dvec);
 
 	// global setup and solve
 	void GlobalDeformationSetup(std::vector<CCrossSection> def_cs_list);

@@ -48,8 +48,8 @@ public:
 	static bool xml_read_sections(std::string fname, std::vector<CCrossSection> &cs_list);
 	static bool xml_write_sections(std::string fname, const std::vector<CCrossSection> &cs_list);
 
-	static SwitchType xml_read_config_file(
-		const std::string fname, CFileIO::InputPaths &in_paths);
+	//static SwitchType xml_read_config_file(
+	//	const std::string fname, CFileIO::InputPaths &in_paths);
 
 	static SwitchType ini_read_config_file(
 		const std::string fname, CFileIO::InputPaths &in_paths);
@@ -57,6 +57,7 @@ public:
 
 	static bool write_mesh(std::string fname, COpenMeshT &mesh, bool is_emb = false);
 	static bool write_mesh_to_stl(std::string fname, COpenMeshT &mesh, bool is_emb = false);
+	static bool write_mesh_to_obj(std::string fname, COpenMeshT &mesh, bool is_emb = false);
 
 	static bool output_SST(CSstObject* sst, CFileIO::OutputPaths out_paths);
 	static bool output_CS(CSstObject* sst, std::string fname);

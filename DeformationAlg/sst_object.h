@@ -47,7 +47,7 @@ public:
 	{
 		return trimesh_;
 	};
-	bool OutputDefMesh(COpenMeshT &mesh) 
+	bool OutputDefMesh(COpenMeshT &mesh)
 	{
 		if (is_deformed_) {
 			mesh = def_trimesh_;
@@ -172,8 +172,9 @@ private:
 		COpenMeshT::Point c, COpenMeshT::Point d, 
 		std::vector<COpenMeshT::Point> &cs_pts, bool is_emb = false);
 	void decoding_vector_field(DenseMatrixXd & U,
-		const DenseMatrixXd & V, const std::vector<int> ids);
+		DenseMatrixXd & V, const std::vector<int> ids);
 	void decoding_mesh();
+	void decoding_mesh(const std::map<int, COpenMeshT::Point> &map_id_dvec);
 	void skeleton_driven_cross_section_transformation();
 };
 #endif

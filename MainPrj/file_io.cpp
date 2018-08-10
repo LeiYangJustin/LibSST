@@ -345,8 +345,8 @@ bool CFileIO::write_mesh(std::string fname, COpenMeshT & m, bool is_emb)
 	}
 
 	// write
-	fout_file << "##Mesh" << std::endl;
-	fout_file << "#Vertices" << std::endl;
+	//fout_file << "##Mesh" << std::endl;
+	//fout_file << "#Vertices" << std::endl;
 	if (!is_emb) {
 		for (auto viter = m.vertices_begin();
 			viter != m.vertices_end(); ++viter)
@@ -365,17 +365,17 @@ bool CFileIO::write_mesh(std::string fname, COpenMeshT & m, bool is_emb)
 				<< std::endl;
 		}
 	}
-	fout_file << "#Faces" << std::endl;
-	for (auto fiter = m.faces_begin();
-		fiter != m.faces_end(); ++fiter)
-	{
-		for (auto ccwfv_iter = m.cfv_ccwbegin(*fiter);
-			ccwfv_iter != m.cfv_ccwend(*fiter); ++ccwfv_iter)
-		{
-			fout_file << ccwfv_iter->idx() << " ";
-		}
-		fout_file << std::endl;
-	}
+	//fout_file << "#Faces" << std::endl;
+	//for (auto fiter = m.faces_begin();
+	//	fiter != m.faces_end(); ++fiter)
+	//{
+	//	for (auto ccwfv_iter = m.cfv_ccwbegin(*fiter);
+	//		ccwfv_iter != m.cfv_ccwend(*fiter); ++ccwfv_iter)
+	//	{
+	//		fout_file << ccwfv_iter->idx() << " ";
+	//	}
+	//	fout_file << std::endl;
+	//}
 	fout_file.close();
 	return true;
 }
@@ -385,6 +385,7 @@ bool CFileIO::write_mesh_to_stl(std::string fname, COpenMeshT & mesh, bool is_em
 	std::ofstream out_file(fname);
 	if (out_file.is_open())
 	{
+		mesh.update_face_normals();
 		char* obj_name = "SF";
 		out_file << "solid " << obj_name << std::endl;
 		for (COpenMeshT::FaceIter fiter = mesh.faces_begin();
@@ -395,7 +396,7 @@ bool CFileIO::write_mesh_to_stl(std::string fname, COpenMeshT & mesh, bool is_em
 			for (COpenMeshT::FaceVertexCCWIter fviter = mesh.fv_ccwbegin(*fiter);
 				fviter != mesh.fv_ccwend(*fiter);  ++fviter)
 			{
-				if (!is_emb)
+				if (!is_emb) 
 					out_file << "            vertex " << mesh.point(*fviter) << std::endl;
 				else
 					out_file << "            vertex " << mesh.data(*fviter).get_emb_coord() << std::endl;
@@ -408,6 +409,50 @@ bool CFileIO::write_mesh_to_stl(std::string fname, COpenMeshT & mesh, bool is_em
 		return true;
 	}
 	return false;
+}
+
+bool CFileIO::write_mesh_to_obj(std::string fname, COpenMeshT & m, bool is_emb)
+{
+	// open file
+	std::ofstream  fout_file;
+	fout_file.open(fname);
+	if (!fout_file.is_open()) {
+		std::cerr << "PrintMesh(): cannot open the file" << std::endl;
+		return false;
+	}
+
+	// write
+	//fout_file << "##Mesh" << std::endl;
+	//fout_file << "#Vertices" << std::endl;
+	if (!is_emb) {
+		for (auto viter = m.vertices_begin();
+			viter != m.vertices_end(); ++viter)
+		{
+			fout_file<< "v "
+				<< m.point(*viter)
+				<< std::endl;
+		}
+	}
+	else {
+		for (auto viter = m.vertices_begin();
+			viter != m.vertices_end(); ++viter)
+		{
+			fout_file << viter->idx() << " "
+				<< m.data(*viter).get_emb_coord()
+				<< std::endl;
+		}
+	}
+	for (auto fiter = m.faces_begin();
+		fiter != m.faces_end(); ++fiter)
+	{
+		fout_file << "f ";
+		for (COpenMeshT::FaceVertexCCWIter fviter = m.fv_ccwbegin(*fiter);
+			fviter != m.fv_ccwend(*fiter);  ++fviter)
+			fout_file << fviter->idx()+1 << " ";
+		fout_file << std::endl;
+	}
+	fout_file.close();
+	return true;
 }
 
 //bool CFileIO::read_config_file_ini(std::string fname)

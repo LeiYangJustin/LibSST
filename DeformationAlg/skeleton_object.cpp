@@ -48,11 +48,12 @@ void CSkeleton::compute_rotation_minimizing_frames()
 	for (int i = 1; i < 3; i++) {
 		std::vector<double> g;
 		CGeoCalculator::givensTransform(Tinit(0), Tinit(i), g);
-		Rtmp(1, 1) = g[0]; // c
-		Rtmp(1, i) = g[1]; // s
-		Rtmp(i, 1) = -g[1]; // -s
-		Rtmp(i, i) = g[0];
+		Rtmp(0, 0) = g[0]; // c
+		Rtmp(0, i) = g[1]; // s
+		Rtmp(i, 0) = -g[1]; // -s
+		Rtmp(i, i) = g[0];  // c
 		Rm *= Rtmp;
+		//std::cout << "Rtmp = \n" << Rtmp << std::endl;
 	}
 
 	DenseMatrixXd R(numPts, 3);
@@ -61,6 +62,12 @@ void CSkeleton::compute_rotation_minimizing_frames()
 	S.setZero();
 	R.row(0) = Rm.row(1);
 	S.row(0) = Rm.row(2);
+
+	//std::cerr << "Initialization of RMF computation: " << std::endl;
+	//std::cerr << T.row(0) << std::endl;
+	//std::cerr << R.row(0) << std::endl;
+	//std::cerr << S.row(0) << std::endl;
+
 
 	// compute
 	double_reflection(skel_pts, T, R, S);
@@ -74,6 +81,17 @@ void CSkeleton::compute_rotation_minimizing_frames()
 		rmf.row(2) = S.row(i);
 		RMF_list_.push_back(rmf);
 	}
+
+	////
+	//std::ofstream file_out_rmf("rmf_list.txt");
+	//if (file_out_rmf.is_open())
+	//{
+	//	for (int i = 0; i < RMF_list_.size(); i++)
+	//	{
+	//		file_out_rmf << RMF_list_[i] << std::endl;
+	//	}
+	//}
+	//file_out_rmf.close();
 }
 
 void CSkeleton::double_reflection(
@@ -83,7 +101,7 @@ void CSkeleton::double_reflection(
 	DenseMatrixXd & S)
 {
 	int numPts = skeletal_pts.rows();
-	double th = 0.001;
+	double th = 0.0000001;
 
 	for (int i = 0; i < numPts - 1; i++)
 	{

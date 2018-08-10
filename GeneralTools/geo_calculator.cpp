@@ -653,8 +653,8 @@ void CGeoCalculator::sample_polygon_with_parameters(std::vector<double> tparas,
 	for (int i = 0; i < tparas.size(); i++)
 	{
 		double t = tparas[i];
-		if (t == 0.0 && pid > 0) pid++;
-		COpenMeshT::Point pt = cs_pts[pid] + t * (cs_pts[pid + 1] - cs_pts[pid]);
+		if (t == 0.0) pid++;
+		COpenMeshT::Point pt = cs_pts[pid-1] + t * (cs_pts[pid] - cs_pts[pid-1]);
 		out_pts.push_back(pt);
 	}
 }

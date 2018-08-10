@@ -25,19 +25,28 @@ void CSSTDeformer::LocalDeformationSetUp(
 		// in
 		std::vector<COpenMeshT::Point> left_cs_pts = cs_list[i].GetEmbProfPts();
 		std::vector<COpenMeshT::Point> right_cs_pts = cs_list[i+1].GetEmbProfPts();
+
+		//
+		std::vector<COpenMeshT::Point> left_cs_samples, right_cs_samples;
+		std::vector<double> left_ts = cs_list[i].GetParameters();
+		std::vector<double> right_ts = cs_list[i+1].GetParameters();
+		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_cs_pts, left_cs_samples, cs_list[i].IsClosed());
+		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_cs_pts, right_cs_samples, cs_list[i+1].IsClosed());
+		//
+		left_cs_pts = left_cs_samples;
+		right_cs_pts = right_cs_samples;
+		//
+
 		// out
 		std::pair<int, int> cs_pair(cs_list[i].GetSid(), cs_list[i + 1].GetSid());
 		// new deformer
 		if (p_deformer_map_.find(cs_pair) == p_deformer_map_.end()) {
 			// set scaling ratio
-			CMeshDeformation* p_deformer = new CMeshDeformation(0.01);
+			CMeshDeformation* p_deformer = new CMeshDeformation(0.1);
 			// compute
 			get_deformer(left_cs_pts, right_cs_pts, p_deformer);
 			p_deformer_map_[cs_pair] = p_deformer;
 		}
-		//else {
-		//	std::cout << "we have the deformer, so we don't need to set up a new one" << std::endl;
-		//}
 	}
 }
 
@@ -61,12 +70,29 @@ bool CSSTDeformer::LocalDeformationSolve(
 		std::vector<COpenMeshT::Point> right_cs_pts = def_cs_list[i+1].GetEmbProfPts();
 		std::vector<COpenMeshT::Point> right_def_cs_pts = def_cs_list[i+1].GetDefEmbProfPts();
 
+		//
+		std::vector<COpenMeshT::Point> left_cs_samples, left_def_cs_samples;
+		std::vector<double> left_ts = def_cs_list[i].GetParameters();
+		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_cs_pts, left_cs_samples, def_cs_list[i].IsClosed());
+		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_def_cs_pts, left_def_cs_samples, def_cs_list[i].IsClosed());
+		//
+		std::vector<COpenMeshT::Point> right_cs_samples, right_def_cs_samples;
+		std::vector<double> right_ts = def_cs_list[i+1].GetParameters();
+		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_cs_pts, right_cs_samples, def_cs_list[i+1].IsClosed());
+		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_def_cs_pts, right_def_cs_samples, def_cs_list[i+1].IsClosed());
+		//
+		left_cs_pts = left_cs_samples;
+		left_def_cs_pts = left_def_cs_samples;
+		right_cs_pts = right_cs_samples;
+		right_def_cs_pts = right_def_cs_samples;
+		//
+
 		std::pair<double, double> bound_xCoords;
 		bound_xCoords.first = left_def_cs_pts[0][0];
 		bound_xCoords.second = right_def_cs_pts[0][0];
 
-		std::cout << cs_pair.first << " " << cs_pair.second << std::endl;
-		std::cout << bound_xCoords.first << " " << bound_xCoords.second << std::endl;
+		//std::cout << cs_pair.first << " " << cs_pair.second << std::endl;
+		//std::cout << bound_xCoords.first << " " << bound_xCoords.second << std::endl;
 
 		// check
 		if (left_cs_pts.size() != left_def_cs_pts.size()) {
@@ -106,10 +132,119 @@ bool CSSTDeformer::LocalDeformationSolve(
 		local_deformation_solve(left_handles_vecs, right_handles_vecs, roi_pts, p_deformer, roi_vecs);
 		for (int j = 0; j < roi_ids.size(); j++)
 		{
+			//
 			COpenMeshT::Point pt = roi_vecs[j] + roi_pts[j];
 			COpenMeshT::VertexHandle def_vh = p_mesh_def->vertex_handle(roi_ids[j]);
 			p_mesh_def->data(def_vh).set_emb_coord(pt);
+			//
 		}
+	}
+
+	return true;
+}
+
+bool CSSTDeformer::LocalDeformationSolve(COpenMeshT * p_mesh,
+	const std::vector<CCrossSection> def_cs_list, 
+	std::map<int, COpenMeshT::Point> &map_id_dvec)
+{
+	std::map<int, int> map_id_cnt;
+
+	// compute
+	//for (int i = 0; i < cs_pair_list_.size(); i++)
+	for (int i = 0; i < def_cs_list.size() - 1; i++)
+	{
+		// prepare
+		std::pair<int, int> cs_pair(def_cs_list[i].GetSid(), def_cs_list[i + 1].GetSid());
+
+		std::vector<COpenMeshT::Point> left_cs_pts = def_cs_list[i].GetEmbProfPts();
+		std::vector<COpenMeshT::Point> left_def_cs_pts = def_cs_list[i].GetDefEmbProfPts();
+
+		std::vector<COpenMeshT::Point> right_cs_pts = def_cs_list[i + 1].GetEmbProfPts();
+		std::vector<COpenMeshT::Point> right_def_cs_pts = def_cs_list[i + 1].GetDefEmbProfPts();
+
+		//
+		std::vector<COpenMeshT::Point> left_cs_samples, left_def_cs_samples;
+		std::vector<double> left_ts = def_cs_list[i].GetParameters();
+		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_cs_pts, left_cs_samples, def_cs_list[i].IsClosed());
+		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_def_cs_pts, left_def_cs_samples, def_cs_list[i].IsClosed());
+		//
+		std::vector<COpenMeshT::Point> right_cs_samples, right_def_cs_samples;
+		std::vector<double> right_ts = def_cs_list[i + 1].GetParameters();
+		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_cs_pts, right_cs_samples, def_cs_list[i + 1].IsClosed());
+		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_def_cs_pts, right_def_cs_samples, def_cs_list[i + 1].IsClosed());
+		//
+		left_cs_pts = left_cs_samples;
+		left_def_cs_pts = left_def_cs_samples;
+		right_cs_pts = right_cs_samples;
+		right_def_cs_pts = right_def_cs_samples;
+		//
+
+		std::pair<double, double> bound_xCoords;
+		bound_xCoords.first = left_def_cs_pts[0][0];
+		bound_xCoords.second = right_def_cs_pts[0][0];
+
+		//std::cout << cs_pair.first << " " << cs_pair.second << std::endl;
+		//std::cout << bound_xCoords.first << " " << bound_xCoords.second << std::endl;
+
+		// check
+		if (left_cs_pts.size() != left_def_cs_pts.size()) {
+			std::cerr << "sizes of the original and deformed left CSs do not match" << std::endl;
+			return false;
+		}
+		if (right_cs_pts.size() != right_def_cs_pts.size()) {
+			std::cerr << "sizes of the original and deformed right CSs do not match" << std::endl;
+			return false;
+		}
+
+		// in
+		std::vector<COpenMeshT::Point> left_handles_vecs, right_handles_vecs;
+		for (int j = 0; j < left_cs_pts.size(); j++) {
+			left_handles_vecs.push_back(left_def_cs_pts[j] - left_cs_pts[j]);
+		}
+		for (int j = 0; j < right_cs_pts.size(); j++) {
+			right_handles_vecs.push_back(right_def_cs_pts[j] - right_cs_pts[j]);
+		}
+
+		CMeshDeformation* p_deformer = p_deformer_map_[cs_pair];
+		// get roi_pts
+		std::vector<int> roi_ids;
+		std::vector<COpenMeshT::Point> roi_pts;
+		for (auto viter = p_mesh->vertices_begin(); viter != p_mesh->vertices_end(); ++viter)
+		{
+			COpenMeshT::Point pt = p_mesh->data(*viter).get_emb_coord();
+			if (pt[0] > bound_xCoords.first && pt[0] < bound_xCoords.second) {
+				roi_ids.push_back(viter->idx());
+				roi_pts.push_back(pt);
+			}
+		}
+		// accummulate
+		std::vector<COpenMeshT::Point> roi_vecs;
+		local_deformation_solve(left_handles_vecs, right_handles_vecs, roi_pts, p_deformer, roi_vecs);
+		for (int j = 0; j < roi_ids.size(); j++)
+		{
+			// new
+			if (map_id_dvec.find(roi_ids[j]) == map_id_dvec.end())
+			{
+				map_id_dvec.insert(std::make_pair(roi_ids[j], roi_vecs[j]));
+				map_id_cnt.insert(std::make_pair(roi_ids[j], 1));
+			}
+			else
+			{
+				map_id_dvec[roi_ids[j]] += roi_vecs[j];
+				map_id_cnt[roi_ids[j]]++;
+			}
+		}
+	}
+	// out
+	for (auto mIter = map_id_dvec.begin(); mIter != map_id_dvec.end(); ++mIter)
+	{
+		int vid = mIter->first;
+		if (map_id_cnt.find(vid) == map_id_cnt.end())
+			return false;
+		//
+		if (map_id_cnt.find(vid)->second>1)
+			std::cout << map_id_cnt.find(vid)->second << std::endl;
+		mIter->second /= map_id_cnt.find(vid)->second;
 	}
 
 	return true;

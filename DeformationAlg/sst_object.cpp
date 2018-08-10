@@ -56,25 +56,47 @@ bool CSstObject::LocalDeformSolve()
 		int id = def_sid_list_[i];
 		def_cross_sections.push_back(map_id_cross_sections_[id]);
 	}
-	this->def_trimesh_ = this->trimesh_;
-	//
 	auto t1 = std::chrono::high_resolution_clock::now();
-	//
-	if (deformer_->LocalDeformationSolve(def_cross_sections, &this->trimesh_, &this->def_trimesh_)) {
-		decoding_mesh(); // have the deformed mesh in the original space
-		//
-		auto t2 = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-		std::cout << "Time spent for Local Solve: " << time_span.count() << " seconds" << std::endl;
-		//
-		is_deformed_ = true;
-		return true;
+	if (false) {
+		// this can be used as well; but I prefer the latter impl, which conforms to the thesis
+		this->def_trimesh_ = this->trimesh_;
+		if (deformer_->LocalDeformationSolve(def_cross_sections, &this->trimesh_, &this->def_trimesh_))
+		{
+			decoding_mesh(); // have the deformed mesh in the original space
+			auto t2 = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+			std::cout << "Time spent for Local Solve: " << time_span.count() << " seconds" << std::endl;
+			//
+
+			std::cerr << "# in the original mesh: " << trimesh_.n_vertices() << std::endl;
+			std::cerr << "# in the deformed mesh: " << def_trimesh_.n_vertices() << std::endl;
+
+			is_deformed_ = true;
+			return true;
+		}
+		else {
+			std::cout << "local deformation failed" << std::endl;
+			return false;
+		}
 	}
 	else {
-		std::cout << "local deformation failed" << std::endl;
-		return false;
-	}
-		
+		std::map<int, COpenMeshT::Point> map_id_dvec;
+		if (deformer_->LocalDeformationSolve(&this->trimesh_, def_cross_sections, map_id_dvec))
+		{
+			decoding_mesh(map_id_dvec);
+			//
+			auto t2 = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+			std::cout << "Time spent for Local Solve: " << time_span.count() << " seconds" << std::endl;
+			//
+			is_deformed_ = true;
+			return true;
+		}
+		else {
+			std::cout << "local deformation failed" << std::endl;
+			return false;
+		}
+	}	
 }
 
 bool CSstObject::GlobalDeformSolve()
@@ -99,8 +121,13 @@ bool CSstObject::GlobalDeformSolve()
 			std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 			std::cout << "Time spent for Global Solve: " << time_span.count() << " seconds" << std::endl;
 			//
+
+			std::cerr << "# in the original mesh: " << trimesh_.n_vertices() << std::endl;
+			std::cerr << "# in the deformed mesh: " << def_trimesh_.n_vertices() << std::endl;
+
 			is_deformed_ = true;
 			return true;
+
 		}
 		else {
 			std::cout << "global deformation failed" << std::endl;
@@ -155,7 +182,7 @@ void CSstObject::extracting_cross_sections(std::vector<int> sid_list)
 		COpenMeshT::Point cemb(skeleton_.GetAccumArcLength()[sid], 0.0, 0.0);
 		std::vector<COpenMeshT::Point> cs_pts, emb_cs_pts;
 		//COpenMeshT::Point tang_vec(rmf_list[sid](0, 0), rmf_list[sid](0, 1), rmf_list[sid](0, 2));
-		std::cout << "cs_extraction: " << sid << "; " << cemb << std::endl;
+		//std::cout << "cs_extraction: " << sid << "; " << cemb << std::endl;
 		//extracting_single_cross_section(skeleton_.GetSkeletalPts()[sid], tang_vec, cs_pts);
 
 		if (extracting_single_cross_section(cemb, COpenMeshT::Point(1.0, 0.0, 0.0), emb_cs_pts, true))
@@ -247,9 +274,6 @@ bool CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 	fcl_emst_obj.Compute();
 	fcl_emst_obj.GetSortedPoints(test_pts);
 
-	//
-	std::cout << "extracted: " << cs_pts.size()
-		<< "prunned: " << cs_pts.size() << std::endl;
 	cs_pts.clear();
 	cs_pts = test_pts;
 	CGeoCalculator::simplify_polygon(cs_pts);
@@ -269,7 +293,7 @@ bool CSstObject::extracting_single_cross_section(COpenMeshT::Point center,
 }
 
 void CSstObject::decoding_vector_field(DenseMatrixXd & U, 
-	const DenseMatrixXd & V, const std::vector<int> ids)
+	DenseMatrixXd & V, const std::vector<int> ids)
 {
 	assert(V.rows() == ids.size());
 	if (!is_encoded_) {
@@ -281,7 +305,7 @@ void CSstObject::decoding_vector_field(DenseMatrixXd & U,
 	U.resize(V.rows(), 3);
 	for (int i = 0; i < V.rows(); i++)
 	{
-		Eigen::RowVectorXd v = V.row(i);
+		Eigen::RowVector3d v(V(i, 0), V(i, 1), V(i, 2));
 		U.row(i) = v*rmf_list[ids[i]];
 	}
 }
@@ -305,6 +329,25 @@ void CSstObject::decoding_mesh()
 		COpenMeshT::Point ptmp = def_trimesh_.point(*viter) + COpenMeshT::Point(d1(0), d1(1), d1(2));
 		def_trimesh_.set_point(*viter, ptmp);
 	}
+
+	std::cerr << "# in the original mesh: " << trimesh_.n_vertices() << std::endl;
+	std::cerr << "# in the deformed mesh: " << def_trimesh_.n_vertices() << std::endl;
+}
+
+void CSstObject::decoding_mesh(const std::map<int, COpenMeshT::Point> &map_id_dvec)
+{
+	def_trimesh_.clear();
+	def_trimesh_ = trimesh_;
+
+	for (auto mIter = map_id_dvec.begin(); mIter != map_id_dvec.end(); ++mIter)
+	{
+		COpenMeshT::VertexHandle vh = def_trimesh_.vertex_handle(mIter->first);
+		COpenMeshT::Point p = def_trimesh_.point(vh) + mIter->second;
+		def_trimesh_.set_point(vh, p);
+	}
+
+	std::cerr << "# in the original mesh: " << trimesh_.n_vertices() << std::endl;
+	std::cerr << "# in the deformed mesh: " << def_trimesh_.n_vertices() << std::endl;
 }
 
 void CSstObject::skeleton_driven_cross_section_transformation()

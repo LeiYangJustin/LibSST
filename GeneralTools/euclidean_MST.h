@@ -140,6 +140,7 @@ public:
 			else if (mapIter->second > 2)
 				numJoints++;
 		}
+
 		// should be endPids.size() - 2 = numJoints
 		//std::cerr << "#End points: " << endPids.size() << ", #Joints: " << numJoints << std::endl;
 		
