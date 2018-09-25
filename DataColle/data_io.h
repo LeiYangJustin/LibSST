@@ -13,13 +13,7 @@ class DATACOLLE_CLASS CDataIO
 protected:
 
 public:
-	
-
 	static bool ReadMesh(std::string fname, CMeshObject & res_mesh_obj);
-	//static bool WriteMesh(std::string fname, CMeshObject & res_mesh_obj);
-	//static bool WriteMesh(std::string fname, COpenMeshT & trimesh);
-	
-
 	static bool ReadCurve(std::string fname, CCurveObject & res_curve_obj, double scale = 1.0);
 };
 #endif
