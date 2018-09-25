@@ -30,9 +30,6 @@
     <ClCompile Include="euclidean_MST.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="rtl\fitting_curve_using_bspline.cpp">
-      <Filter>rtl</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="geo_calculator.h">
@@ -75,9 +72,6 @@
       <Filter>rtl</Filter>
     </ClInclude>
     <ClInclude Include="rtl\RTL.hpp">
-      <Filter>rtl</Filter>
-    </ClInclude>
-    <ClInclude Include="rtl\fitting_curve_using_bspline.h">
       <Filter>rtl</Filter>
     </ClInclude>
   </ItemGroup>

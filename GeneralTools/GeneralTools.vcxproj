@@ -151,7 +151,6 @@
   <ItemGroup>
     <ClCompile Include="fe_meshIO.cpp" />
     <ClCompile Include="geo_calculator.cpp" />
-    <ClCompile Include="rtl\fitting_curve_using_bspline.cpp" />
     <ClCompile Include="visibility_graph.cpp" />
     <ClCompile Include="euclidean_MST.cpp" />
   </ItemGroup>
@@ -163,7 +162,6 @@
     <ClInclude Include="general_tool_prereq.h" />
     <ClInclude Include="rtl\Base.hpp" />
     <ClInclude Include="rtl\Evaluator.hpp" />
-    <ClInclude Include="rtl\fitting_curve_using_bspline.h" />
     <ClInclude Include="rtl\Line.hpp" />
     <ClInclude Include="rtl\LMedS.hpp" />
     <ClInclude Include="rtl\MLESAC.hpp" />
