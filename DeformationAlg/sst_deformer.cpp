@@ -26,16 +26,16 @@ void CSSTDeformer::LocalDeformationSetUp(
 		std::vector<COpenMeshT::Point> left_cs_pts = cs_list[i].GetEmbProfPts();
 		std::vector<COpenMeshT::Point> right_cs_pts = cs_list[i+1].GetEmbProfPts();
 
-		//
-		std::vector<COpenMeshT::Point> left_cs_samples, right_cs_samples;
-		std::vector<double> left_ts = cs_list[i].GetParameters();
-		std::vector<double> right_ts = cs_list[i+1].GetParameters();
-		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_cs_pts, left_cs_samples, cs_list[i].IsClosed());
-		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_cs_pts, right_cs_samples, cs_list[i+1].IsClosed());
-		//
-		left_cs_pts = left_cs_samples;
-		right_cs_pts = right_cs_samples;
-		//
+		////
+		//std::vector<COpenMeshT::Point> left_cs_samples, right_cs_samples;
+		//std::vector<double> left_ts = cs_list[i].GetParameters();
+		//std::vector<double> right_ts = cs_list[i+1].GetParameters();
+		//CGeoCalculator::sample_polygon_with_parameters(left_ts, left_cs_pts, left_cs_samples, cs_list[i].IsClosed());
+		//CGeoCalculator::sample_polygon_with_parameters(right_ts, right_cs_pts, right_cs_samples, cs_list[i+1].IsClosed());
+		////
+		//left_cs_pts = left_cs_samples;
+		//right_cs_pts = right_cs_samples;
+		////
 
 		// out
 		std::pair<int, int> cs_pair(cs_list[i].GetSid(), cs_list[i + 1].GetSid());
@@ -162,22 +162,22 @@ bool CSSTDeformer::LocalDeformationSolve(COpenMeshT * p_mesh,
 		std::vector<COpenMeshT::Point> right_cs_pts = def_cs_list[i + 1].GetEmbProfPts();
 		std::vector<COpenMeshT::Point> right_def_cs_pts = def_cs_list[i + 1].GetDefEmbProfPts();
 
-		//
-		std::vector<COpenMeshT::Point> left_cs_samples, left_def_cs_samples;
-		std::vector<double> left_ts = def_cs_list[i].GetParameters();
-		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_cs_pts, left_cs_samples, def_cs_list[i].IsClosed());
-		CGeoCalculator::sample_polygon_with_parameters(left_ts, left_def_cs_pts, left_def_cs_samples, def_cs_list[i].IsClosed());
-		//
-		std::vector<COpenMeshT::Point> right_cs_samples, right_def_cs_samples;
-		std::vector<double> right_ts = def_cs_list[i + 1].GetParameters();
-		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_cs_pts, right_cs_samples, def_cs_list[i + 1].IsClosed());
-		CGeoCalculator::sample_polygon_with_parameters(right_ts, right_def_cs_pts, right_def_cs_samples, def_cs_list[i + 1].IsClosed());
-		//
-		left_cs_pts = left_cs_samples;
-		left_def_cs_pts = left_def_cs_samples;
-		right_cs_pts = right_cs_samples;
-		right_def_cs_pts = right_def_cs_samples;
-		//
+		////
+		//std::vector<COpenMeshT::Point> left_cs_samples, left_def_cs_samples;
+		//std::vector<double> left_ts = def_cs_list[i].GetParameters();
+		//CGeoCalculator::sample_polygon_with_parameters(left_ts, left_cs_pts, left_cs_samples, def_cs_list[i].IsClosed());
+		//CGeoCalculator::sample_polygon_with_parameters(left_ts, left_def_cs_pts, left_def_cs_samples, def_cs_list[i].IsClosed());
+		////
+		//std::vector<COpenMeshT::Point> right_cs_samples, right_def_cs_samples;
+		//std::vector<double> right_ts = def_cs_list[i + 1].GetParameters();
+		//CGeoCalculator::sample_polygon_with_parameters(right_ts, right_cs_pts, right_cs_samples, def_cs_list[i + 1].IsClosed());
+		//CGeoCalculator::sample_polygon_with_parameters(right_ts, right_def_cs_pts, right_def_cs_samples, def_cs_list[i + 1].IsClosed());
+		////
+		//left_cs_pts = left_cs_samples;
+		//left_def_cs_pts = left_def_cs_samples;
+		//right_cs_pts = right_cs_samples;
+		//right_def_cs_pts = right_def_cs_samples;
+		////
 
 		std::pair<double, double> bound_xCoords;
 		bound_xCoords.first = left_def_cs_pts[0][0];
