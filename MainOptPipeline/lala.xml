@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DUT_AutoMorpher>
+   <Time time="1">
+      <Section EndPoint="25" ID="7" Length="80" SPID="40" Width="60" X="217.2915">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="1.7848" ID="12"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="-1.2488" ID="37"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="2.7703" ID="62"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="-1.967" ID="87"/>
+      </Section>
+      <Section EndPoint="25" ID="8" Length="80" SPID="45" Width="60" X="244.3018">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="4.0252" ID="12"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="-3.1147" ID="37"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="-2.9378" ID="62"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="-1.3072" ID="87"/>
+      </Section>
+      <Section EndPoint="25" ID="9" Length="80" SPID="50" Width="60" X="271.2918">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="2.0407" ID="12"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="0.067214" ID="37"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="-2.4262" ID="62"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="4.0938" ID="87"/>
+      </Section>
+      <Section EndPoint="25" ID="10" Length="80" SPID="55" Width="60" X="298.2934">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="-0.50174" ID="12"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="1.0416" ID="37"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="-3.7773" ID="62"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="-3.244" ID="87"/>
+      </Section>
+   </Time>
+</DUT_AutoMorpher>

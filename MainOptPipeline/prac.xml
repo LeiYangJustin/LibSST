@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DUT_AutoMorpher>
+   <Time time="1">
+      <Section EndPoint="25" ID="7" Length="80" SPID="40" Width="60" X="217.2915">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="2.5463" ID="6"/>
+         <CtrlPoint Deformation="0.86313" ID="12"/>
+         <CtrlPoint Deformation="0.28054" ID="18"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="-0.29906" ID="31"/>
+         <CtrlPoint Deformation="1.6888" ID="37"/>
+         <CtrlPoint Deformation="2.4751" ID="43"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="-0.2858" ID="56"/>
+         <CtrlPoint Deformation="2.6275" ID="62"/>
+         <CtrlPoint Deformation="3.7411" ID="68"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="2.438" ID="81"/>
+         <CtrlPoint Deformation="1.0849" ID="87"/>
+         <CtrlPoint Deformation="3.517" ID="93"/>
+      </Section>
+      <Section EndPoint="25" ID="8" Length="80" SPID="45" Width="60" X="244.3018">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="-4.4758" ID="6"/>
+         <CtrlPoint Deformation="0.74271" ID="12"/>
+         <CtrlPoint Deformation="-2.5102" ID="18"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="3.8756" ID="31"/>
+         <CtrlPoint Deformation="0.43333" ID="37"/>
+         <CtrlPoint Deformation="-3.6889" ID="43"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="2.8195" ID="56"/>
+         <CtrlPoint Deformation="1.1042" ID="62"/>
+         <CtrlPoint Deformation="-4.5494" ID="68"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="-2.0166" ID="81"/>
+         <CtrlPoint Deformation="-0.15775" ID="87"/>
+         <CtrlPoint Deformation="-0.68159" ID="93"/>
+      </Section>
+      <Section EndPoint="25" ID="9" Length="80" SPID="50" Width="60" X="271.2918">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="1.0718" ID="6"/>
+         <CtrlPoint Deformation="-2.0467" ID="12"/>
+         <CtrlPoint Deformation="2.8536" ID="18"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="2.1151" ID="31"/>
+         <CtrlPoint Deformation="3.4721" ID="37"/>
+         <CtrlPoint Deformation="-4.9481" ID="43"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="1.0542" ID="56"/>
+         <CtrlPoint Deformation="1.69" ID="62"/>
+         <CtrlPoint Deformation="-1.8825" ID="68"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="-4.0162" ID="81"/>
+         <CtrlPoint Deformation="-3.9217" ID="87"/>
+         <CtrlPoint Deformation="2.0581" ID="93"/>
+      </Section>
+      <Section EndPoint="25" ID="10" Length="80" SPID="55" Width="60" X="298.2934">
+         <CtrlPoint Deformation="0" ID="0"/>
+         <CtrlPoint Deformation="-1.0163" ID="6"/>
+         <CtrlPoint Deformation="-2.5025" ID="12"/>
+         <CtrlPoint Deformation="3.6246" ID="18"/>
+         <CtrlPoint Deformation="0" ID="25"/>
+         <CtrlPoint Deformation="-2.1663" ID="31"/>
+         <CtrlPoint Deformation="2.606" ID="37"/>
+         <CtrlPoint Deformation="3.5894" ID="43"/>
+         <CtrlPoint Deformation="0" ID="50"/>
+         <CtrlPoint Deformation="-1.4379" ID="56"/>
+         <CtrlPoint Deformation="-3.4609" ID="62"/>
+         <CtrlPoint Deformation="-4.1057" ID="68"/>
+         <CtrlPoint Deformation="0" ID="75"/>
+         <CtrlPoint Deformation="2.0349" ID="81"/>
+         <CtrlPoint Deformation="2.4789" ID="87"/>
+         <CtrlPoint Deformation="2.5348" ID="93"/>
+      </Section>
+   </Time>
+</DUT_AutoMorpher>
